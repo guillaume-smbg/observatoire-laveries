@@ -64,3 +64,10 @@
 - Le géocodeur IGN/BAN a ajouté 44 positions d'adresse strictes parmi 179 demandes ; le calcul géographique utilise donc 1 523 pistes positionnées et laisse 135 non localisées. Les adresses restent des indices d'adresse, pas des preuves de commerce. Le service a renvoyé plusieurs HTTP 504 avant la fin ; le seuil n'a pas été assoupli.
 - Le calcul de proximité a été régénéré : 2 695 IRIS, 2 589 indices calculables, 106 non calculables et 50 zones distinctes. Le classement reste une heuristique non calibrée et la concurrence inclut des candidats non vérifiés.
 - Vérification HTTP le 18 novembre : pages principales, recensement, opportunités et fichiers publics de recensement/INSEE/OSM répondent 200 sur GitHub Pages. Ce contrôle ne valide pas l'interaction navigateur.
+
+## Retentative de géocodage — 18 novembre 2026
+
+- Le collecteur BAN normalise désormais les abréviations de voie (par ex. « Bd », « Av. », « Imp. ») uniquement lorsqu'elles forment un mot autonome, retire les codes postaux dupliqués de l'adresse et n'ajoute le code postal qu'une fois à la requête. Le numéro de voie reste obligatoire.
+- Des tests locaux couvrent notamment « Rue Marie Stuart » et « Rue aux Ours » afin de vérifier que la normalisation conserve les noms complets de rues. Le seuil d'acceptation demeure 0,82, avec numéro et code postal strictement identiques et une précision BAN « housenumber ».
+- L'appel de rafraîchissement n'a pas abouti dans cet environnement : la connexion sortante au service IGN s'est fermée avant retour de résultats. Aucune donnée publiée n'a été remplacée et le snapshot reste à **44 adresses BAN strictes et 135 candidates sans position**. Il faut relancer le workflow lorsque l'API est joignable ; ne pas abaisser le seuil pour compenser.
+- Le compteur BAUG de Paris reste à 578 entrées annoncées pour 100 fiches accessibles sur la page publique indexée. Les 478 entrées manquantes n'ont pas été recréées depuis des fragments de moteur de recherche, qui ne constituent ni une liste complète ni une base d'import fiable.
