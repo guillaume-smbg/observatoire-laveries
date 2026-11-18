@@ -75,9 +75,9 @@ Pour le rayon choisi, le score exploratoire affiché sur la page Opportunités u
 - 38 % : résidences principales estimées dans le rayon, normalisées par le 90e percentile régional (plafond de 100 points) ;
 - 25 % : part estimée des logements de moins de 40 m² ;
 - 22 % : part estimée des logements occupés par des locataires ;
-- 15 % : facteur de concurrence indicatif `max(0,100 - 16 × nombre_de_points_OSM)`.
+- 15 % : facteur de concurrence indicatif `max(0,100 - 16 × nombre_de_fiches_candidates)` selon le scénario de sources sélectionné. Le scénario par défaut retient les fiches de nature plausible retrouvées dans **au moins deux des trois annuaires**. Il ne constitue pas un décompte de commerces vérifiés.
 
-Le visiteur choisit le périmètre (300/500/1 000 m) et le niveau de preuves OSM à inclure (tous les points, libre-service renseigné, ou libre-service plus noms évocateurs). Le classement recalculé peut donc varier selon les hypothèses. Le score n'est **pas** un modèle de conversion des habitants en visites et ne constitue pas une prédiction du CA.
+Le visiteur choisit le périmètre (300/500/1 000 m) et un scénario de présence concurrentielle : OSM seul ; annuaire croisé à deux sources ; toutes les fiches de nature plausible ; ou toutes les fiches, y compris pressings possibles. Les fiches qu’il a personnellement classées « à exclure » peuvent être retranchées localement (option explicitement activée), sans modifier la base publique. L’interface indique la sensibilité du score selon trois scénarios des annuaires. Le classement recalculé peut donc varier selon les hypothèses. Le score n'est **pas** un modèle de conversion des habitants en visites et ne constitue pas une prédiction du CA.
 
 La sélection par défaut retient au maximum **50 zones distinctes**, avec un espacement géographique d'au moins 650 m entre leurs points représentatifs, afin d'éviter d'afficher plusieurs fois le même bassin approximatif.
 
@@ -89,3 +89,27 @@ Chaque zone sauvegardée a un loyer et un nombre de cycles/jour saisis **manuell
 L'application présente trois variantes d'activité : **65 %, 100 % et 135 %** des cycles journaliers saisis. La valeur initiale est une simple hypothèse, jamais une conséquence du score de potentiel. Elle est éditable séparément pour chaque zone. La comparaison est sauvegardée dans le navigateur, exportable en CSV et imprimable vers PDF à l'aide de la fonction d'impression du navigateur.
 
 Ce module ne remplace pas la validation terrain des laveries, une étude piétonne, un relevé de loyers, un prévisionnel fiscal ni une décision d'investissement.
+
+## 10. Élargissement des sources, géocodage IGN/BAN et limites des inventaires
+
+Le recensement croisé (voir [RECENSEMENT_CROISE.md](RECENSEMENT_CROISE.md)) contient 1 658 candidats issus d'OSM, de BAUG et de Laverie Ouvert au 18 novembre 2026. **Il ne s'agit pas de 1 658 laveries automatiques vérifiées en activité.** Deux fiches rapprochées peuvent être distinctes, un pressing peut être mal classé, et des établissements peuvent être fermés. BAUG annonce notamment 486 fiches départementales non retrouvées dans les listes consultables, essentiellement à Paris.
+
+Le traitement de géocodage supplémentaire `scripts/geocode_candidates.py` emploie l'API officielle **IGN Géoplateforme / Base Adresse Nationale** (`https://data.geopf.fr/geocodage/search`). Il n'adresse au service que l'adresse postale et le code postal déjà publics, sans nom d'entreprise. Un point géographique n'est accepté que si le géocodeur retourne un résultat de type `housenumber`, un code postal identique, un numéro de rue identique et un score de rapprochement au moins égal à 0,82. Au premier passage, **44 des 179 fiches non géolocalisées** ont reçu un point d'adresse ; 135 restent sans position. Cette position identifie une **adresse de la BAN**, pas l'existence ou l'ouverture de la laverie qui serait supposée s'y trouver.
+
+Le calcul `scripts/build_opportunities.py` agrège les fiches des annuaires croisées **sans additionner plusieurs fois celles qui ont été rapprochées**. Il expose les variantes : 
+- `directory.multi` : fiches de nature compatible présentes dans au moins deux sources ;
+- `directory.plausible` : toutes les fiches dont les indications disponibles évoquent une laverie ;
+- `directory.all` : toutes les fiches géolocalisées, y compris pressings et autres catégories incertaines ;
+- `osm.explicit`, `osm.plausible`, `osm.all` : contrôles comparatifs basés uniquement sur les points OSM.
+
+Le scénario `directory.multi` est choisi à l'ouverture du classement ; ce n'est **pas un minimum garanti de commerces actifs**. L'écart de scores selon les scénarios illustre la sensibilité de l'analyse aux données non vérifiées. Les fiches sans coordonnées sont conservées dans le recensement, mais non affectées à un cercle de concurrence. La qualité de la collecte étant incomplète près des limites départementales et dans les annuaires tronqués, les résultats ne permettent pas de conclure qu'un quartier n'a aucun concurrent.
+
+Le bouton « Isochrones piétons » de la page Opportunités effectue **une seule requête déclenchée manuellement** au service de démonstration public Valhalla à partir du point IRIS sélectionné, pour dessiner les contours de marche à 5, 10 et 15 minutes lorsque le service répond. Ce réseau piéton reste **indicatif**, peut être indisponible, et n'alimente pas le score ou les chiffres de population : ces derniers restent calculés selon des cercles géométriques.
+
+## 11. File de vérification terrain et sauvegarde
+
+Le fichier `data/verification-prioritaire.csv`, produit par `scripts/build_review_queue.py`, liste **tous les candidats** et une charge de contrôle priorisée, d'après cinq facteurs : source unique, nature de commerce incertaine, doublon possible, mauvaise précision géographique et proximité d'une zone du Top 50 expérimental. Il s'agit d'un **ordre de traitement**, et non d'un niveau de preuve de présence ou d'activité. Répartition du premier passage : 384 en catégorie A, 641 en B et 633 en C.
+
+Chaque fiche de la page `recensement.html` comporte un lien de recherche Google Maps, un statut de contrôle local, un type constaté, une note et un lien de référence facultatif. Les vérifications **ne sont pas réalisées automatiquement**. Les données saisies sont stockées uniquement dans le navigateur, exportables en CSV ou en sauvegarde JSON, et restaurables depuis ce JSON. Aucun statut ne se propage à la base globale ni à un autre visiteur sans action humaine.
+
+**Critères de recette métier encore dépendants d'un contrôle terrain :** réelle existence des établissements, activité de libre-service, doublons résiduels, tarifs pratiqués, machines et fermeture effective. Il faut également un local réellement proposé à la location et des devis pour conclure à la rentabilité.
