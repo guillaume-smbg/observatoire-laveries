@@ -1,0 +1,92 @@
+{
+  "generated_at": "2026-11-18T11:29:15.861529+00:00",
+  "source_counts": {
+    "osm": 929,
+    "ouvert": 1162,
+    "baug": 755
+  },
+  "coverage": {
+    "75": {
+      "osm": 526,
+      "ouvert": 527,
+      "baug": 100,
+      "distinct_candidates": 696,
+      "geolocated": 687,
+      "unlocated": 9
+    },
+    "92": {
+      "osm": 161,
+      "ouvert": 159,
+      "baug": 180,
+      "distinct_candidates": 288,
+      "geolocated": 247,
+      "unlocated": 41
+    },
+    "93": {
+      "osm": 121,
+      "ouvert": 217,
+      "baug": 235,
+      "distinct_candidates": 358,
+      "geolocated": 290,
+      "unlocated": 68
+    },
+    "94": {
+      "osm": 121,
+      "ouvert": 182,
+      "baug": 204,
+      "distinct_candidates": 316,
+      "geolocated": 255,
+      "unlocated": 61
+    }
+  },
+  "match_stats": {
+    "ouvert_linked": 710,
+    "ouvert_new_geo": 452,
+    "baug_linked": 478,
+    "baug_new_unlocated": 179,
+    "baug_new_geo": 98
+  },
+  "composition": {
+    "osm": 296,
+    "osm+ouvert": 416,
+    "baug+osm+ouvert": 217,
+    "ouvert": 227,
+    "baug+ouvert": 225,
+    "baug": 277
+  },
+  "total_candidates": 1658,
+  "located_candidates": 1479,
+  "annuaire_claimed_by_department": {
+    "baug": {},
+    "ouvert": {}
+  },
+  "directory_coverage_difference": {
+    "baug": {
+      "75": -100,
+      "92": -189,
+      "93": -244,
+      "94": -222
+    },
+    "ouvert": {
+      "75": -563,
+      "92": -171,
+      "93": -224,
+      "94": -204
+    }
+  },
+  "failed_pages": [
+    {
+      "page": "https://baug.fr/ville/l-hay-les-roses/",
+      "reason": "404 Client Error: Not Found for url: https://baug.fr/ville/l-hay-les-roses/"
+    },
+    {
+      "page": "https://baug.fr/ville/ormesson-sur-marne/",
+      "reason": "404 Client Error: Not Found for url: https://baug.fr/ville/ormesson-sur-marne/"
+    }
+  ],
+  "pages_examined": {
+    "baug": 115,
+    "ouvert": 135
+  },
+  "caveat": "Derived distinct candidate records are NOT verified distinct active self-service laundries. Matching and coordinate clues must be checked."
+}
