@@ -33,6 +33,7 @@ footer{max-width:1440px;margin:14px auto 28px;padding:0 16px;color:var(--muted);
 @media(max-width:1100px){.layout{grid-template-columns:1fr}.controls{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){main{padding:8px}.panel{padding:12px}.controls{grid-template-columns:1fr}#map{height:400px}.detail-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
 @media print{body{background:white;font-size:11px}header{background:white;color:#173147;padding:8px}header .toplinks,footer .hide-print,.hide-print,#map,#map-panel,#table-panel,.controls{display:none!important}.layout{display:block}main{padding:0;display:block}.panel{break-inside:avoid;border:0;box-shadow:none;padding:7px}.table-wrap{max-height:none;overflow:visible}table{min-width:0}td,th{padding:5px;white-space:normal}button{display:none!important}h2{font-size:17px}.kpis{grid-template-columns:repeat(4,1fr)}#place-detail{min-height:0}#comparison-panel{display:block!important}}
+.print-value{display:none}@media print{.print-value{display:inline}#comparison-panel input{display:none!important}}
 </style>
 </head>
 <body>
@@ -104,7 +105,7 @@ footer{max-width:1440px;margin:14px auto 28px;padding:0 16px;color:var(--muted);
 <label>Taux annuel du crédit (%)<input id="interest" type="number" min="0" max="100" step=".1" value="5"></label>
 <label>Durée du crédit (années)<input id="years" type="number" min="1" max="25" value="7"></label>
 </div>
-<div class="table-wrap"><table><thead><tr><th>Zone et niveau de concurrence</th><th>Loyer HT/mois</th><th>Cycles/jour (hyp.)</th><th>CA lavage/mois HT</th><th>Flux mensuel après prêt*</th><th>Seuil cycles/jour</th><th class="hide-print">Action</th></tr></thead><tbody id="comparison-rows"><tr><td colspan="7">Aucune zone sauvegardée.</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Zone et niveau de concurrence</th><th>Loyer HT/mois</th><th>Cycles/jour (hyp.)</th><th>CA lavage/mois HT</th><th>Flux prudent (65 %)*</th><th>Flux central*</th><th>Flux dynamique (135 %)*</th><th>Seuil cycles/jour</th><th class="hide-print">Action</th></tr></thead><tbody id="comparison-rows"><tr><td colspan="9">Aucune zone sauvegardée.</td></tr></tbody></table></div>
 <div class="bar hide-print"><button id="export-comparison">Exporter la comparaison CSV</button><button class="secondary" id="print-comparison">Imprimer / enregistrer en PDF</button><button class="secondary" id="clear-comparison">Vider ma sélection</button></div>
 <p class="muted">* Flux simplifié avant fiscalité, amortissements, TVA, rémunération, investissements de renouvellement, CFE non renseignée et variations de trésorerie. Aucun loyer de marché ni devis n'est préchargé.</p>
 </section>
