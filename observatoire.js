@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const num=x=>Number.isFinite(Number(x))?Number(x):null;
+const num=x=>x===null||x===undefined||String(x).trim()===''?null:(Number.isFinite(Number(x))?Number(x):null);
 let communes=[],cells=[],candidate=null;
 const status=s=>{$('data-status').textContent=s};
 function distance(a,b){const r=Math.PI/180,dLat=(b.lat-a.lat)*r,dLon=(b.lon-a.lon)*r,h=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)**2;return 12742000*Math.asin(Math.min(1,Math.sqrt(h)))}
@@ -22,5 +22,5 @@ $('demography-template').onclick=()=>download('modele-demographie.csv',csv([['id
 $('demography-file').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const lines=(await file.text()).replace(/^\ufeff/,'').trim().split(/\r?\n/);const delim=lines[0].includes(';')?';':',';const head=lines.shift().split(delim).map(x=>x.trim().replace(/^"|"$/g,''));const idx=k=>head.indexOf(k);if(['id','lat','lon','population','small_housing_share_pct','renters_share_pct','source','year'].some(k=>idx(k)<0))throw Error('Colonnes requises manquantes');const imported=lines.map(line=>{const v=line.split(delim).map(x=>x.trim().replace(/^"|"$/g,''));return {id:v[idx('id')],lat:num(v[idx('lat')]),lon:num(v[idx('lon')]),population:num(v[idx('population')]),smallHousing:num(v[idx('small_housing_share_pct')]),renters:num(v[idx('renters_share_pct')]),radius:num(v[idx('radius_m')])||500,source:v[idx('source')],year:v[idx('year')]}}).filter(x=>x.id&&x.id!=='EXEMPLE_A_SUPPRIMER'&&x.lat!==null&&x.lon!==null&&x.population!==null&&x.source&&x.year);cells=imported;status(cells.length+' cellules démographiques importées (données utilisateur, non vérifiées).');renderSite()}catch(err){status('Import démographique refusé : '+err.message)}};
 $('site-refresh').onclick=()=>{renderSite();renderCommunes()};
 $('site-export').onclick=()=>{const p=coord();if(!p)return status('Sélectionnez un emplacement');const c=competitorCounts(p);download('analyse-emplacement.csv',csv([['latitude','longitude','osm_300m','osm_500m','osm_1000m','date_export','statut'],[p.lat,p.lon,...c,new Date().toISOString(),'OSM non exhaustif, distances à vol d’oiseau']]),'text/csv;charset=utf-8')};
-$('data-status').textContent='Population communale disponible sur demande ; aucune donnée infracommunale préchargée.';
+$('data-status').textContent='Chargement des populations communales…';fetchCommunes().catch(e=>status('Données communales indisponibles : '+e.message));
 })();
