@@ -10,14 +10,24 @@ try{
  await page.waitForFunction(()=>document.getElementById('loading')?.textContent.includes('Recoupement disponible'),{timeout:40000});
  const n=Number((await page.locator('#count-total').innerText()).replaceAll(/\s/g,''));
  assert.ok(n>900,'Census should exceed original OSM baseline');
+ const ban=Number((await page.locator('#count-ban').innerText()).replace(/\s/g,''));
+ assert.ok(ban>=35,'Strict IGN/BAN address suggestions missing');
  const original=Number((await page.locator('#count-osm').innerText()).replaceAll(/\s/g,''));
  assert.ok(original>=800,'Baseline OSM inventory unexpectedly small');
  await page.locator('#source').selectOption('nonosm');
  assert.ok((await page.locator('#summary').innerText()).includes('candidats'),'Filtered source count missing');
  await page.locator('[data-select]').first().click();
  assert.ok(await page.locator('#selected a[href*="google.com/maps/search/"]').count(),'Candidate should provide manual Google Maps cross-check');
+ await page.locator('#local-type').selectOption('automatic');
+ await page.locator('#local-note').fill('Passage de contrôle terrain à confirmer');
+ await page.locator('#local-note').press('Tab');
+ await page.locator('#local-evidence').fill('https://www.google.com/maps/search/?api=1&query=laverie');
+ await page.locator('#local-evidence').press('Tab');
  await page.locator('#local-check').selectOption('google_seen');
  assert.equal(await page.locator('#local-check').inputValue(),'google_seen','Manual Google corroboration must be local');
+ const backup=page.waitForEvent('download');
+ await page.locator('#export-backup').click();
+ assert.equal((await backup).suggestedFilename(),'mes-controles-laveries.json','JSON backup missing');
  const download=page.waitForEvent('download');
  await page.locator('#export').click();
  assert.ok((await download).suggestedFilename().endsWith('.csv'),'Filtered CSV export not working');
@@ -30,5 +40,5 @@ try{
  assert.ok(overflow<=12,'Unexpected horizontal mobile overflow: '+overflow);
  assert.deepEqual(errors,[],'Uncaught frontend JS exception(s)');
  await page.screenshot({path:'/tmp/observatoire-recensement.png',fullPage:true});
- console.log('PASS: multi-directory audit, OSM baseline, filters, manual Google check, CSV, mobile layout, map, no page errors');
+ console.log('PASS: multi-directory audit, OSM baseline, filters, BAN geocoding, manual notes and Google check, JSON backup, CSV, mobile layout, map, no page errors');
 }finally{await browser.close()}
