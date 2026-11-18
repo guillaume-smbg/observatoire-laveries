@@ -5,7 +5,7 @@
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const nfr = value => Number(value).toLocaleString('fr-FR',{maximumFractionDigits:0});
   const pct = value => value == null || !Number.isFinite(Number(value)) ? 'ND' : Number(value).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %';
-  let iris=[], osm=null, meta=null, markers=null, contours=null, cachedScores=new Map(), reviewed={};
+  let iris=[], osm=null, meta=null, markers=null, contours=null, cachedScores=new Map(), reviewed={}, sirene=null, sireneMeta=null, osmAudit=null;
   try { reviewed=JSON.parse(localStorage.getItem('observatoire-laveries-reviews-v1') || '{}') } catch(_){}
   const km = (a,b) => {
     const r=Math.PI/180, dy=(a.lat-b.lat)*r, dx=(a.lon-b.lon)*r;
@@ -138,7 +138,43 @@
     });
   }
   function saveReviews(){try{localStorage.setItem('observatoire-laveries-reviews-v1',JSON.stringify(reviewed))}catch(_){}}
-  let inventoryRows=[];
+  let inventoryRows=[],sireneRows=[];
+  function osmSireneMatches(id){
+    return (sirene||[]).filter(r=>r.closest_osm_id===id);
+  }
+  function osmQualityLabel(r){
+    return ({
+      'self_service_tagged':'Libre-service renseigné dans OSM (non vérifié)',
+      'possibly_automatic':'Nom évoquant une laverie (indice faible)',
+      'probably_not_automatic':'Possiblement pressing ou non libre-service',
+      'unclassified':'Catégorie non précisée'
+    })[r.quality||'unclassified']||'Catégorie non précisée';
+  }
+  function renderSirene(){
+    const dept=E('sirene-dept').value,scope=E('sirene-scope').value,query=E('sirene-search').value.toLocaleLowerCase('fr');
+    sireneRows=(sirene||[]).filter(r=>(!dept||r.dep===dept)&&
+      (!scope||(scope==='mapped'?!!r.closest_osm_id:!r.closest_osm_id))&&
+      (!query||[r.name,r.postcode,r.dep].some(x=>String(x||'').toLocaleLowerCase('fr').includes(query))));
+    E('sirene-summary').textContent=sirene
+      ?sireneRows.length.toLocaleString('fr-FR')+' établissements administratifs correspondants aux filtres, sur '+sirene.length.toLocaleString('fr-FR')+' candidats. Cela ne prouve pas la présence d’une laverie automatique.'
+      :'Source SIRENE non encore publiée ou momentanément indisponible.';
+    E('sirene-body').innerHTML=sireneRows.slice(0,200).map(r=>
+      '<tr><td><strong>'+escapeHtml(r.name)+'</strong><small>'+escapeHtml(r.postcode||'')+' · NAF '+escapeHtml(r.activity)+'</small></td>'
+      +'<td>'+escapeHtml(r.dep)+'</td>'
+      +'<td>'+(r.closest_osm_id
+        ?'<span title="Proximité géographique uniquement">'+escapeHtml(r.closest_osm_id)+' · '+escapeHtml(r.closest_osm_meters)+' m (non confirmé)</span>'
+        :'Pas de point OSM rapproché dans la base')+'</td>'
+      +'<td><a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(r.registry_url)+'">Fiche SIRENE ↗</a></td></tr>').join('')
+      ||'<tr><td colspan="4">Aucun candidat SIRENE correspondant ou donnée absente.</td></tr>';
+  }
+  E('sirene-export').onclick=()=>{
+    if(!sirene)return;
+    download('candidats-sirene-9601B-non-verifies.csv',csv([
+      ['siret','nom_commercial_ou_libelle_generique','code_postal','departement','latitude','longitude','naf','etat_administratif','osm_proche_id','distance_osm_m','registre','limite'],
+      ...sireneRows.map(r=>[r.id,r.name,r.postcode,r.dep,r.lat,r.lon,r.activity,r.administrative_status,r.closest_osm_id||'',r.closest_osm_meters??'',r.registry_url,'Immatriculation ≠ commerce ouvert ni libre-service'])
+    ]));
+  };
+  ['sirene-dept','sirene-scope','sirene-search'].forEach(id=>E(id).addEventListener('input',renderSirene));
   function googleMapsSearch(r){
     const name=String(r.name||'').trim();
     const generic=!name||name.toLowerCase().startsWith('laverie (nom absent)');
@@ -148,8 +184,15 @@
     return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query);
   }
   function inventory(){
-    const query=E('osm-search').value.toLocaleLowerCase('fr'), dep=E('osm-dept').value,decision=E('osm-status').value;
-    inventoryRows=(osm||[]).filter(r=>(!dep||r.dep===dep)&&(!query||[r.name,r.address,r.id].some(x=>String(x||'').toLocaleLowerCase('fr').includes(query)))&&(!decision||((reviewed[r.id]?.status)||'pending')===decision));
+    const query=E('osm-search').value.toLocaleLowerCase('fr'), dep=E('osm-dept').value,
+      decision=E('osm-status').value,quality=E('osm-quality').value,registry=E('osm-sirene').value;
+    const nearSet=new Set((sirene||[]).map(r=>r.closest_osm_id).filter(Boolean));
+    inventoryRows=(osm||[]).filter(r=>
+      (!dep||r.dep===dep) &&
+      (!quality||(r.quality||'unclassified')===quality) &&
+      (!registry||(registry==='near'?nearSet.has(r.id):!nearSet.has(r.id))) &&
+      (!query||[r.name,r.address,r.id].some(x=>String(x||'').toLocaleLowerCase('fr').includes(query))) &&
+      (!decision||((reviewed[r.id]?.status)||'pending')===decision));
     const tabs=inventoryRows.slice(0,200);
     E('osm-inventory-summary').textContent=osm
       ? nfr(inventoryRows.length)+' établissements OSM parmi '+nfr(osm.length)+' recensés, visibles : '+Math.min(tabs.length,200)
@@ -159,7 +202,10 @@
       '<tr><td><button type="button" class="tiny" data-osm="'+escapeHtml(r.id)+'">'+escapeHtml(r.name)+'</button>'
       +'<small>'+escapeHtml(r.address||'Adresse non renseignée')+' · '+escapeHtml(r.id)+'</small>'
       +'<a class="google-check" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(googleMapsSearch(r))+'">Rechercher sur Google Maps ↗</a></td>'
-      +'<td>'+escapeHtml(r.dep)+'</td><td>'+escapeHtml(r.self_service||'Non précisé')+'</td>'
+      +'<td>'+escapeHtml(r.dep)+'</td><td>'+escapeHtml(osmQualityLabel(r))+
+      (r.possible_duplicate_of?'<small>Doublon possible : '+escapeHtml(r.possible_duplicate_of)+'</small>':'')+
+      (nearSet.has(r.id)?'<small>Établissement SIRENE à moins de 45 m — identité non confirmée</small>':'<small>Pas de rapprochement SIRENE enregistré</small>')+
+      '</td>'
       +'<td><select aria-label="Statut de vérification locale" data-review="'+escapeHtml(r.id)+'">'
       +[['pending','À vérifier'],['google_seen','Fiche Google concordante (non vérifié sur place)'],['confirmed','Contrôlé sur place'],['excluded','À exclure']].map(([v,l])=>
         '<option value="'+v+'"'+((reviewed[r.id]?.status||'pending')===v?' selected':'')+'>'+l+'</option>').join('')+'</select></td></tr>').join('')||
@@ -187,8 +233,8 @@
   E('osm-export-reviews').onclick=()=>{
     if(!osm)return;
     download('observatoire-verifications-locales.csv',csv([
-      ['osm_id','name','department','status_local','date_local','latitude','longitude','source'],
-      ...osm.map(r=>[r.id,r.name,r.dep,reviewed[r.id]?.status||'pending',reviewed[r.id]?.date||'',r.lat,r.lon,'OSM non vérifié globalement'])
+      ['osm_id','name','department','qualite_osm_non_verifiee','possible_doublon','sirene_proche','status_local','date_local','latitude','longitude','source'],
+      ...osm.map(r=>[r.id,r.name,r.dep,r.quality||'unclassified',r.possible_duplicate_of||'',osmSireneMatches(r.id).map(x=>x.id).join(','),reviewed[r.id]?.status||'pending',reviewed[r.id]?.date||'',r.lat,r.lon,'OSM non vérifié globalement'])
     ]));
   };
   E('rank-export').onclick=()=>{
@@ -202,7 +248,7 @@
   };
   ['rank-dep','rank-search','rank-sort','rank-radius','rank-show-markers','w-households','w-small','w-renters','w-competition']
     .forEach(id=>E(id).addEventListener('input',display));
-  ['osm-search','osm-dept','osm-status'].forEach(id=>E(id).addEventListener('input',inventory));
+  ['osm-search','osm-dept','osm-status','osm-quality','osm-sirene'].forEach(id=>E(id).addEventListener('input',inventory));
   map.on('click',()=>{
     const p=typeof selectedPoint!=='undefined'&&selectedPoint?selectedPoint:null;
     if(!p||!iris.length)return;
@@ -213,7 +259,7 @@
   });
   async function bootstrap(){
     setState('Chargement des sources…');
-    const responses=await Promise.allSettled([json('./data/iris-2022.json'),json('./data/laveries-osm.json'),json('./data/refresh-status.json')]);
+    const responses=await Promise.allSettled([json('./data/iris-2022.json'),json('./data/laveries-osm.json'),json('./data/refresh-status.json'),json('./data/sirene-laundries.json'),json('./data/osm-audit.json')]);
     if(responses[0].status==='fulfilled'){
       const payload=responses[0].value;
       iris=(Array.isArray(payload.rows)?payload.rows:[]).filter(validPoint).map(r=>({
@@ -240,6 +286,25 @@
       if(Object.keys(errors).length)setState('Actualisation partielle : '+Object.entries(errors).map(([k,v])=>k+' : '+v).join(' / '));
       else setState('Sources publiques chargées sans erreur signalée par le dernier traitement.');
     } else setState('Le diagnostic de rafraîchissement n’est pas encore publié.');
+    if(responses[3].status==='fulfilled'){
+      sireneMeta=responses[3].value;
+      sirene=(Array.isArray(sireneMeta.rows)?sireneMeta.rows:[]).filter(validPoint).map(p=>({...p,lat:Number(p.lat),lon:Number(p.lon)}));
+      const incomplete=Object.entries(sireneMeta.errors||{}).map(([dept,issue])=>dept+': '+issue);
+      E('sirene-source').textContent=sirene.length.toLocaleString('fr-FR')+
+        ' établissements déclarés sous 96.01B (candidats administratifs, non des laveries vérifiées) · extraction '+
+        String(sireneMeta.generated_at||'').slice(0,10)+
+        (incomplete.length?' · Couverture partielle : '+incomplete.join(' ; '):'');
+    }else{
+      E('sirene-source').textContent='Deuxième source SIRENE indisponible : aucun rapprochement administratif certifié.';
+    }
+    if(responses[4].status==='fulfilled'){
+      osmAudit=responses[4].value;
+      E('osm-audit-details').textContent='Reconstruction OSM du '+String(osmAudit.generated_at||'inconnue').slice(0,10)+
+        ' — '+(osmAudit.current_snapshot_count??'ND')+' points ; '+(osmAudit.added_count??'ND')+
+        ' ajoutés / '+(osmAudit.removed_count??'ND')+' disparus depuis la précédente extraction ; '+
+        (osmAudit.possible_duplicate_pairs??'ND')+' paires de doublons possibles (non supprimées).';
+    }else E('osm-audit-details').textContent='Audit des variations OSM non disponible pour cette extraction.';
+    renderSirene();
     display();inventory();
   }
   bootstrap().catch(err=>setState('Erreur de chargement : '+err.message));
