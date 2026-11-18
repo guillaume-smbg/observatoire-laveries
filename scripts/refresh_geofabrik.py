@@ -6,6 +6,9 @@ import datetime as dt
 import json
 import logging
 import os
+import re
+import math
+from collections import Counter
 from pathlib import Path
 import tempfile
 import urllib.request
@@ -83,12 +86,25 @@ class LaundryHandler(osmium.SimpleHandler):
         ident=f"{kind}/{obj.id}"
         if ident in self.rows:
             return
+        name = tags.get("name") or "Laverie (nom absent)"
+        service = str(tags.get("self_service") or tags.get("laundry:self_service") or "").lower().strip()
+        low = name.casefold()
+        if service in ("yes","only","designated"):
+            quality = "self_service_tagged"
+        elif service == "no" or any(k in low for k in ("pressing","nettoyage à sec","dry cleaning","teinturerie")):
+            quality = "probably_not_automatic"
+        elif any(k in low for k in ("laverie","lavomatic","laverie automatique","laverie libre","wash and dry","speed queen","wash'n dry","wash & dry")):
+            quality = "possibly_automatic"
+        else:
+            quality = "unclassified"
         self.rows[ident]={
-            "id":ident,"name":tags.get("name") or "Laverie (nom absent)",
+            "id":ident,"name":name,
             "address":" ".join(filter(None,[tags.get("addr:housenumber",""),tags.get("addr:street",""),tags.get("addr:city","")])),
             "dep":dept,"lat":round(lat,7),"lon":round(lon,7),
             "kind":tags.get("shop") or tags.get("amenity") or "laundry",
-            "self_service":tags.get("self_service") or tags.get("laundry:service") or "",
+            "self_service":service,
+            "quality":quality,
+            "osm_last_edited":str(obj.timestamp) if obj.timestamp else None,
             "osm_url":"https://www.openstreetmap.org/"+ident,
             "source":"OpenStreetMap (Geofabrik PBF) — non vérifié"
         }
@@ -132,13 +148,59 @@ def run():
         Path(path).unlink(missing_ok=True)
     if any(handler.counts[d]<10 for d in DEPTS):
         raise RuntimeError("Implausibly low department count, refusing overwrite: "+str(handler.counts))
+    # Flag close points without automatically deleting independent businesses.
+    # Distances are geometric and some OSM nodes/ways may represent the same establishment.
+    points=list(sorted(handler.rows.values(),key=lambda x:x["id"]))
+    groups={}
+    possible_pairs=[]
+    def meters(a,b):
+        rad=math.pi/180.0
+        dy=(a["lat"]-b["lat"])*rad
+        dx=(a["lon"]-b["lon"])*rad
+        t=math.sin(dy/2)**2+math.cos(a["lat"]*rad)*math.cos(b["lat"]*rad)*math.sin(dx/2)**2
+        return 12742000*math.asin(min(1,math.sqrt(t)))
+    for p in points:
+        key=(round(p["lat"]*900),round(p["lon"]*900))
+        for ky in ((key[0]+i,key[1]+j) for i in (-1,0,1) for j in (-1,0,1)):
+            for other in groups.get(ky,[]):
+                if meters(p,other)<18:
+                    possible_pairs.append([other["id"],p["id"]])
+                    p.setdefault("possible_duplicate_of",other["id"])
+                    break
+        groups.setdefault(key,[]).append(p)
+    old_path=DATA/"laveries-osm.json"
+    old_rows=[]
+    if old_path.exists():
+        try: old_rows=json.loads(old_path.read_text(encoding="utf-8")).get("rows",[])
+        except (OSError,ValueError): pass
+    old_ids={x["id"] for x in old_rows}
+    new_ids={x["id"] for x in points}
+    audit={
+        "generated_at":dt.datetime.now(dt.timezone.utc).isoformat(),
+        "source_url":SOURCE,
+        "method":"Fresh full Île-de-France Geofabrik PBF extraction (no old items reused)",
+        "previous_snapshot_count":len(old_ids),
+        "current_snapshot_count":len(new_ids),
+        "added_count":len(new_ids-old_ids),
+        "removed_count":len(old_ids-new_ids),
+        "new_ids":sorted(new_ids-old_ids)[:100],
+        "removed_ids":sorted(old_ids-new_ids)[:100],
+        "possible_duplicate_pairs":len(possible_pairs),
+        "possible_duplicate_examples":possible_pairs[:40],
+        "quality_distribution":dict(Counter(p["quality"] for p in points)),
+        "scope":"Paris + 92 + 93 + 94 (administrative boundaries)",
+        "note":"Possible duplicates not removed; OSM editing dates do not prove a business is operating."
+    }
+    (DATA/"osm-audit.json").write_text(json.dumps(audit,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+    logging.info("Fresh audit: +%d / -%d ; potential duplicates: %d ; labels: %s",
+        audit["added_count"],audit["removed_count"],len(possible_pairs),audit["quality_distribution"])
     doc={
         "source":"OpenStreetMap via Geofabrik daily Île-de-France PBF — NON VÉRIFIÉ",
         "source_url":SOURCE,"generated_at":dt.datetime.now(dt.timezone.utc).isoformat(),
         "exhaustive":False,"professionally_verified":False,"failed_departments":[],
-        "counts_by_department":handler.counts,
+        "counts_by_department":handler.counts, "audit_path":"./data/osm-audit.json",
         "caveat":"Exhaustif uniquement pour les objets OSM étiquetés nodes/ways selon la date de l'extrait, non exhaustif des laveries existantes; inclut potentiellement des pressings; relations OSM non traitées; points ways approximatifs.",
-        "rows":sorted(handler.rows.values(),key=lambda x:x["id"])
+        "rows":points
     }
     target=DATA/"laveries-osm.json"
     target.write_text(json.dumps(doc,ensure_ascii=False,separators=(",",":"))+"\n",encoding="utf-8")
