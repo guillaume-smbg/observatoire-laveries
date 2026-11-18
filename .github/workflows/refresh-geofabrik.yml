@@ -10,7 +10,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: pages
+  group: geofabrik-osm-refresh
   cancel-in-progress: false
 jobs:
   refresh:
