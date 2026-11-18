@@ -58,7 +58,9 @@ def make_region():
 
 def competitors(records,centre,r):
     # Includes all OSM shops in every department, even across admin boundaries.
-    inside=[r0 for r0 in records if centre.distance(point(r0))<=r]
+    radius2=r*r
+    cx,cy=centre.x,centre.y
+    inside=[r0 for r0 in records if (cx-r0['_mx'])**2+(cy-r0['_my'])**2<=radius2]
     return {
       "all":len(inside),
       "explicit":sum(x.get("quality")=="self_service_tagged" for x in inside),
@@ -114,7 +116,7 @@ def main():
     osm=read("laveries-osm.json")
     if osm.get("failed_departments") or len(osm.get("rows",[]))<100:
         raise ValueError("Incomplete OSM evidence, refusing to calculate comprehensive score")
-    records=[x for x in osm["rows"] if x.get("quality") in ("self_service_tagged","possibly_automatic","probably_not_automatic","unclassified")]
+    records=[{**x,"_mx":float(x["lon"])*FX,"_my":float(x["lat"])*FY} for x in osm["rows"] if x.get("quality") in ("self_service_tagged","possibly_automatic","probably_not_automatic","unclassified")]
     tree=STRtree(geoms)
     points=[]
     for i,row in enumerate(rows):
