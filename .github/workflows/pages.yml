@@ -3,6 +3,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Refresh four-department OSM inventory (Geofabrik)
+      - Refresh official SIRENE candidates
+      - Refresh official INSEE IRIS statistics
+      - Generate opportunity areas
+    types: [completed]
 permissions:
   contents: read
   pages: write
@@ -18,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
