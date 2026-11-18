@@ -81,6 +81,13 @@ def main():
         w=csv.DictWriter(f,fieldnames=head,delimiter=";",quoting=csv.QUOTE_MINIMAL)
         w.writeheader()
         w.writerows(out)
+    (D/"verification-prioritaire.json").write_text(json.dumps({
+        "source":"Cross-directory review workload, NOT verified shops",
+        "generated_at":dt.datetime.now(dt.timezone.utc).isoformat(),
+        "directory_generated_at":items.get("generated_at"),
+        "rows":[{"id":x["id"],"priority":x["priorite"],"points":x["points_priorite"],
+                 "reasons":x["motifs"]} for x in out]
+    },ensure_ascii=False,separators=(",",":"))+"\\n",encoding="utf-8")
     counts={}
     for tier in ("A — à vérifier en priorité","B — à vérifier","C — contrôle standard"):
         counts[tier]=sum(x["priorite"]==tier for x in out)
