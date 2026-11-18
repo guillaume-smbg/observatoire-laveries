@@ -1,0 +1,14 @@
+name: Probe public laundry directories
+on:
+  push:
+    paths: [scripts/source_probe.py]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/source_probe.py
