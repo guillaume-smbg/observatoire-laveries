@@ -20,12 +20,15 @@ DATA=Path(__file__).resolve().parent.parent/"data"
 API="https://data.geopf.fr/geocodage/search"
 HEADERS={"User-Agent":"ObservatoireLaveries/1.0 (+https://github.com/guillaume-smbg/observatoire-laveries)","Accept":"application/json"}
 DEPTS={"75","92","93","94"}
-NUMBER=re.compile(r"^\s*(\d{1,4})(?:\s*(?:bis|ter|b|t))?\b",re.I)
+NUMBER=re.compile(r"^\s*(\d{1,4})(?:\s*(bis|ter|quater|b|t|q))?(?=\W|$)",re.I)
 MIN_SCORE=.82
 
 def house(value):
     m=NUMBER.search(str(value or ""))
-    return int(m.group(1)) if m else None
+    if not m:return None
+    suffix=(m.group(2) or "").lower()
+    suffix={"b":"bis","t":"ter","q":"quater"}.get(suffix,suffix)
+    return (int(m.group(1)),suffix)
 
 def fetch(q):
     url=API+"?"+urllib.parse.urlencode({"q":q,"limit":4,"index":"address","autocomplete":0})
@@ -62,7 +65,7 @@ def check(candidate,features):
             return {
                 "id":candidate["id"],"lat":round(lat,7),"lon":round(lon,7),
                 "score":round(score,3),"precision":"BAN_housenumber_address_not_business",
-                "matched_postcode":p_cp,"matched_house_number":pnum,
+                "matched_postcode":p_cp,"matched_house_number":pnum[0],"matched_repetition":pnum[1],
                 "source":"IGN Géoplateforme / Base Adresse Nationale",
                 "matched_label":str(p.get("label") or "")[:150]
             },None
