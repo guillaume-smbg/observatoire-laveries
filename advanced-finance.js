@@ -55,6 +55,8 @@
     $('f-out-threshold').textContent=breakeven===null?'Non calculable':breakeven.toLocaleString('fr-FR',{maximumFractionDigits:1})+' cycles/jour';
     $('f-out-margin').textContent=money(unitMargin)+' HT/cycle';
     $('f-out-fixed').textContent=pm(fixed);
+    $('f-out-rentsqm').textContent=v.area>0?(v.rent/v.area).toLocaleString('fr-FR',{maximumFractionDigits:1})+' €/m²/mois':'ND';
+    $('f-out-load').textContent=v.machines>0?(v.cycles/v.machines).toLocaleString('fr-FR',{maximumFractionDigits:1})+' cycles/machine/jour':'ND';
     $('f-out-invest-detail').textContent='Travaux '+money(a.works)+' + machines '+money(a.machines)
       +' + autres postes '+money(v.kiosk+v.video+v.extra+v.design)
       +' + provision aléas '+money(a.reserve)+' + dépôt de garantie immobilisé '+money(a.deposit)+'.';
