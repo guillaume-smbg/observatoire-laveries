@@ -10,6 +10,11 @@ try{
  await page.waitForFunction(()=>document.getElementById('loading')?.textContent.includes('Recoupement disponible'),{timeout:40000});
  const n=Number((await page.locator('#count-total').innerText()).replaceAll(/\s/g,''));
  assert.ok(n>900,'Census should exceed original OSM baseline');
+ await page.waitForFunction(()=>document.getElementById('review-queue-summary')?.textContent.includes('fiches dans la liste'),{timeout:15000});
+ await page.locator('#priority').selectOption('A');
+ assert.ok((await page.locator('#body tr').count())>0,'Priority A review list empty');
+ assert.ok((await page.locator('#summary').innerText()).includes('candidats'),'Priority filter did not update');
+ await page.locator('#priority').selectOption('');
  const ban=Number((await page.locator('#count-ban').innerText()).replace(/\s/g,''));
  assert.ok(ban>=35,'Strict IGN/BAN address suggestions missing');
  const original=Number((await page.locator('#count-osm').innerText()).replaceAll(/\s/g,''));
@@ -40,5 +45,5 @@ try{
  assert.ok(overflow<=12,'Unexpected horizontal mobile overflow: '+overflow);
  assert.deepEqual(errors,[],'Uncaught frontend JS exception(s)');
  await page.screenshot({path:'/tmp/observatoire-recensement.png',fullPage:true});
- console.log('PASS: multi-directory audit, OSM baseline, filters, BAN geocoding, manual notes and Google check, JSON backup, CSV, mobile layout, map, no page errors');
+ console.log('PASS: multi-directory audit, OSM baseline, filters, BAN geocoding, A/B/C review filters, manual notes and Google check, JSON backup, CSV, mobile layout, map, no page errors');
 }finally{await browser.close()}
