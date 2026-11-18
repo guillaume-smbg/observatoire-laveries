@@ -22,6 +22,19 @@ HEADERS={"User-Agent":"ObservatoireLaveries/1.0 (+https://github.com/guillaume-s
 DEPTS={"75","92","93","94"}
 NUMBER=re.compile(r"^\s*(\d{1,4})(?:\s*(bis|ter|quater|b|t|q))?(?=\W|$)",re.I)
 MIN_SCORE=.82
+# Match abbreviations only as standalone address tokens. In particular, a bare
+# \bR\b would also rewrite the first letter of every full "Rue".
+ADDRESS_ABBREVIATIONS=(
+    (re.compile(r"\bBd\.?(?=\s|$)",re.I),"Boulevard"),
+    (re.compile(r"\bAv\.?(?=\s|$)",re.I),"Avenue"),
+    (re.compile(r"\bImp\.?(?=\s|$)",re.I),"Impasse"),
+    (re.compile(r"\bPl\.?(?=\s|$)",re.I),"Place"),
+    (re.compile(r"\bR\.?(?=\s|$)",re.I),"Rue"),
+    (re.compile(r"\bSq\.?(?=\s|$)",re.I),"Square"),
+    (re.compile(r"\bCh\.?(?=\s|$)",re.I),"Chemin"),
+    (re.compile(r"\bSt\.?(?=\s|$)",re.I),"Saint"),
+    (re.compile(r"\bSte\.?(?=\s|$)",re.I),"Sainte"),
+)
 
 def house(value):
     m=NUMBER.search(str(value or ""))
@@ -29,6 +42,19 @@ def house(value):
     suffix=(m.group(2) or "").lower()
     suffix={"b":"bis","t":"ter","q":"quater"}.get(suffix,suffix)
     return (int(m.group(1)),suffix)
+
+def query_address(value,postcode):
+    """Send only a cleaned street address and one postal code to the BAN."""
+    text=str(value or "").strip()
+    # A house number must start the address; avoid transmitting a business name
+    # that may have been accidentally stored in the address field.
+    if house(text) is None:return ""
+    text=re.sub(r"(?<!\d)\d{5}(?!\d)"," ",text)
+    text=re.sub(r"[,;]+"," ",text)
+    for pattern,replacement in ADDRESS_ABBREVIATIONS:
+        text=pattern.sub(replacement,text)
+    text=" ".join(text.split())
+    return (text+" "+str(postcode).strip()).strip()
 
 def fetch(q):
     url=API+"?"+urllib.parse.urlencode({"q":q,"limit":4,"index":"address","autocomplete":0})
@@ -82,15 +108,15 @@ def main():
     rejected=[]
     seen_cache={}
     for i,p in enumerate(candidates):
-        q=str(p.get("address") or "").strip()
         cp=str(p.get("postcode") or "").strip()
+        q=query_address(p.get("address"),cp)
         if not q or not cp:
             rejected.append({"id":p["id"],"reason":"no_address"});continue
-        key=(q.lower(),cp)
+        key=q.lower()
         if key in seen_cache:
             features=seen_cache[key]
         else:
-            try: features=fetch(q+" "+cp)
+            try: features=fetch(q)
             except Exception as err:
                 rejected.append({"id":p["id"],"reason":"network_error:"+str(err)[:100]})
                 continue
