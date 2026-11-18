@@ -23,12 +23,12 @@
   const weight = id => Number(E(id).value)||0;
   function competition(pt) {
     if(!osm)return null;
-    const match=osm.filter(p=>p.dep===pt.dep);
+    const match=osm; // Cross-department competitors must count near boundaries.
     const dist=match.map(p=>km(pt,p));
     return {c300:dist.filter(d=>d<=.3).length,c500:dist.filter(d=>d<=.5).length,c1000:dist.filter(d=>d<=1).length};
   }
   function canScore(row) {
-    return !!osm && !(meta?.failed_departments||[]).includes(row.dep) &&
+    return !!osm && (meta?.failed_departments||[]).length===0 &&
       Number.isFinite(row.population) && Number.isFinite(row.homes) &&
       Number.isFinite(row.small_pct) && Number.isFinite(row.renters_pct);
   }
