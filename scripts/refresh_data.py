@@ -30,10 +30,10 @@ OVERPASS = [
 ]
 
 
-def retrieve(url, payload=None, timeout=110):
+def retrieve(url, payload=None, timeout=65, retries=2):
     req = urllib.request.Request(url, data=payload, headers=HEADERS, method="POST" if payload else "GET")
     error = None
-    for attempt in range(3):
+    for attempt in range(retries):
         try:
             with urllib.request.urlopen(req, timeout=timeout) as res:
                 body = res.read()
@@ -96,7 +96,7 @@ def iris_code(row):
 def collect_demography():
     logging.info("Fetching official INSEE housing 2022")
     housing = {}
-    for row in csvrows(retrieve(INSEE_LOG, timeout=150), ("IRIS", "P22_RP")):
+    for row in csvrows(retrieve(INSEE_LOG, timeout=80), ("IRIS", "P22_RP")):
         code = iris_code(row)
         if code[:2] not in DEPTS or len(code) != 9:
             continue
@@ -117,7 +117,7 @@ def collect_demography():
     if len(housing) < 200:
         raise RuntimeError("Housing rows too few: " + str(len(housing)))
     logging.info("Fetching official INSEE population 2022")
-    for row in csvrows(retrieve(INSEE_POP, timeout=150), ("IRIS", "P22_POP")):
+    for row in csvrows(retrieve(INSEE_POP, timeout=80), ("IRIS", "P22_POP")):
         code = iris_code(row)
         if code in housing:
             pop = val(row, "P22_POP")
@@ -126,7 +126,7 @@ def collect_demography():
     features = None
     for url in GEO_URLS:
         try:
-            geo = json.loads(retrieve(url, timeout=180))
+            geo = json.loads(retrieve(url, timeout=80, retries=1))
             features = geo.get("features")
             if not features:
                 raise ValueError("GeoJSON features missing")
@@ -182,7 +182,7 @@ def collect_osm():
         response = None
         for url in OVERPASS:
             try:
-                response = json.loads(retrieve(url, payload=payload, timeout=170))
+                response = json.loads(retrieve(url, payload=payload, timeout=45, retries=1))
                 break
             except Exception as exc:
                 logging.warning("Overpass %s / %s: %s", dep, url, exc)
@@ -190,7 +190,7 @@ def collect_osm():
             failed.append(dep)
             continue
         elements = response.get("elements", [])
-        per_dept[dep] = len(elements)
+        if len(elements) < 5:\n            logging.warning("Dept %s: only %s OSM objects returned; classification rejected", dep, len(elements))\n            failed.append(dep)\n            continue\n        per_dept[dep] = len(elements)
         for obj in elements:
             tags = obj.get("tags") or {}
             center = obj.get("center") or obj
