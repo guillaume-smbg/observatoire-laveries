@@ -42,7 +42,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/opportunities.json data/opportunities-audit.json data/verification-prioritaire.csv data/verification-prioritaire-audit.json
+          git add data/opportunities.json data/opportunities-audit.json data/verification-prioritaire.csv data/verification-prioritaire.json data/verification-prioritaire-audit.json
           if ! git diff --cached --quiet; then
             git commit -m "data: recalculate location catchments from INSEE and OSM"
             git fetch origin main
