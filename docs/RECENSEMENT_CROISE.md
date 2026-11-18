@@ -18,6 +18,7 @@ La consolidation recoupe les établissements étiquetés « laundry » d'OpenStr
 | Candidats directement géolocalisés depuis les annuaires / OSM | 1 479 |
 | Adresses supplémentaires géocodées strictement par IGN/BAN | 44 |
 | Positions estimées utilisées par le classement | 1 523 |
+| Candidats restant sans position exploitable après ce géocodage | 135 |
 | Candidats sans géolocalisation suffisamment fiable | 179 |
 | Candidats présents dans au moins deux sources cartographiques | 858 |
 | Candidats présents dans une seule source | 800 |
