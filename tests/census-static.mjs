@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const html=fs.readFileSync('recensement.html','utf8'),src=fs.readFileSync('recensement.js','utf8');
+new vm.Script(src,{filename:'recensement.js'});
+assert.ok(html.includes('src="./recensement.js"'),'Missing census script');
+assert.ok(html.includes('OpenStreetMap')&&html.includes('BAUG')&&html.includes('Laverie Ouvert'),'Attribution missing');
+assert.ok(html.includes('non')&&html.includes('vérifi'),'Uncertainty label missing');
+const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
+assert.equal(new Set(ids).size,ids.length,'Duplicate census HTML ID');
+const set=new Set(ids);
+for(const x of src.matchAll(/\$\('([^']+)'\)/g))assert.ok(set.has(x[1]),'Missing census UI id '+x[1]);
+assert.ok(html.includes('Google Maps')&&src.includes('localStorage'),'Manual verification must be user controlled');
+console.log('PASS: multi-directory census JS, DOM inputs and source disclaimers');
