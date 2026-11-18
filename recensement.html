@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Inventaire recoupé des laveries de Paris et petite couronne, OSM, BAUG et Laverie Ouvert, avec traçabilité et contrôles manuels.">
+<title>Recensement croisé des laveries — Observatoire</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--ink:#153247;--muted:#5a7081;--accent:#13689b;--line:#dce5ec;--bg:#f4f7fa}
+*{box-sizing:border-box}body{margin:0;font:14px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);background:var(--bg)}
+header{background:#14344d;color:white;padding:15px max(16px,calc((100vw - 1400px)/2))}header h1{font-size:24px;margin:10px 0 4px}header a{color:#d0e9f8;text-decoration:none}nav{display:flex;gap:15px;flex-wrap:wrap}
+main{max-width:1400px;margin:auto;padding:18px;display:grid;gap:14px}.card{background:white;border-radius:12px;border:1px solid var(--line);padding:17px;box-shadow:0 2px 12px rgba(31,52,72,.025);min-width:0}
+.card h2{font-size:19px;margin:0 0 9px}.sub{font-size:12px;color:var(--muted);margin:6px 0}.notice{border-left:4px solid #d99e37;padding:4px 12px;background:#fff9ec}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.kpi{border:1px solid var(--line);padding:10px;border-radius:8px}.kpi strong{font-size:21px;display:block}.kpi small{color:var(--muted)}
+.filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}label{font-size:12px;font-weight:650;display:block}
+input,select,button{font:inherit}input,select{width:100%;border:1px solid #b4c3ce;border-radius:7px;padding:9px;background:white;margin-top:4px}
+button,.button{cursor:pointer;background:var(--accent);color:white;border:0;border-radius:7px;padding:9px 12px;text-decoration:none;display:inline-block}
+button:focus-visible,a:focus-visible{outline:3px solid #e89620;outline-offset:2px}button.secondary{background:#eaf2f8;color:#153247;border:1px solid #c2d4e1}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+#map{height:550px;border-radius:10px;z-index:0}.tablewrap{max-height:550px;overflow:auto}table{border-collapse:collapse;width:100%;min-width:650px}
+th{position:sticky;top:0;background:#e8eff5;z-index:1}th,td{padding:9px 8px;text-align:left;border-bottom:1px solid #e4ebf0;vertical-align:top}tr:hover td{background:#f6f9fc}small{color:var(--muted)}
+small.block{display:block}.tag{display:inline-block;font-size:11px;background:#e9f3f5;border-radius:5px;padding:2px 6px;margin:3px 3px 0 0}.tag.warn{background:#fff0da}.tag.good{background:#e4f4eb}
+#selected{min-height:140px}#selected h3{margin:3px 0}.sel-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}a{color:#17659b}footer{max-width:1400px;padding:8px 18px 28px;margin:auto;font-size:12px;color:var(--muted)}
+@media(max-width:1100px){.layout{grid-template-columns:minmax(0,1fr)}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:640px){main{padding:8px}.card{padding:12px}.filters{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}#map{height:400px}.sel-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><header><nav aria-label="Navigation"><a href="./">← Carte principale</a><a href="./opportunites.html">Comparateur des quartiers</a><a href="#audit">Audit des sources</a><a href="#results">Établissements</a></nav><h1>Recensement croisé des laveries</h1><div>75 · 92 · 93 · 94 · OSM + BAUG + Laverie Ouvert</div></header>
+<main>
+<section class="card"><div class="notice"><strong>Important :</strong> ce sont des <strong>pistes de commerces</strong>, pas un dénombrement certain des laveries automatiques ouvertes. Les annuaires peuvent contenir des pressings, des doublons et des établissements fermés. Aucun résultat n'est automatiquement déclaré « vérifié par Google ».</div>
+<p id="loading" role="status">Chargement des annuaires et de l'audit…</p>
+<div class="kpis">
+<div class="kpi"><small>Fiches OSM initiales</small><strong id="count-osm">—</strong></div>
+<div class="kpi"><small>Fiches Laverie Ouvert</small><strong id="count-ouvert">—</strong></div>
+<div class="kpi"><small>Fiches BAUG accessibles</small><strong id="count-baug">—</strong></div>
+<div class="kpi"><small>Candidats après rapprochements*</small><strong id="count-total">—</strong></div>
+<div class="kpi"><small>Candidats avec position</small><strong id="count-geo">—</strong></div>
+</div>
+<p class="sub">* Le rapprochement est volontairement prudent : il peut rester des doublons. Les sources ne sont pas forcément exhaustives et ne doivent pas être additionnées.</p>
+</section>
+<section class="card" id="audit"><h2>Audit des données et limites</h2><div id="audit-body">Les informations de collecte seront affichées ici.</div></section>
+<section class="card"><h2>Rechercher et filtrer</h2>
+<div class="filters">
+<label>Département<select id="dept"><option value="">Tous (75 / 92 / 93 / 94)</option><option value="75">Paris (75)</option><option value="92">Hauts-de-Seine (92)</option><option value="93">Seine-Saint-Denis (93)</option><option value="94">Val-de-Marne (94)</option></select></label>
+<label>Nom ou adresse<input id="search" placeholder="Rue, enseigne, code postal…"></label>
+<label>Provenance<select id="source"><option value="">Toutes provenances</option><option value="osm">Présent dans OSM</option><option value="ouvert">Présent dans Laverie Ouvert</option><option value="baug">Présent dans BAUG</option><option value="multi">Référencé par plusieurs sources</option><option value="nonosm">Absent d'OSM</option></select></label>
+<label>Type présumé<select id="quality"><option value="">Tous, sans exclusion automatique</option><option value="self_service_tagged">OSM : libre-service renseigné</option><option value="possibly_automatic">OSM : nom évoquant une laverie</option><option value="likely_laundry_unverified">Annuaire : laverie présumée</option><option value="possibly_nonautomatic">Pressing / service non automatique possible</option><option value="probably_not_automatic">OSM : non automatique possible</option><option value="uncertain_type">Type indéterminé</option><option value="unclassified">OSM : type non classé</option></select></label>
+<label>Position<select id="geo"><option value="">Avec ou sans coordonnées</option><option value="yes">Sur la carte</option><option value="no">Sans position fiable</option></select></label>
+<label>Contrôle local<select id="status"><option value="">Tous</option><option value="pending">À vérifier</option><option value="google_seen">Fiche concordante consultée</option><option value="confirmed">Contrôlé sur place</option><option value="excluded">À exclure</option></select></label>
+<label>Tri<select id="sort"><option value="source">Sources recoupées</option><option value="name">Nom</option><option value="dept">Département</option></select></label>
+<label>Limite d'affichage<select id="limit"><option value="100" selected>100 lignes</option><option value="300">300 lignes</option><option value="1000">1 000 lignes</option><option value="10000">Toutes les lignes</option></select></label>
+</div>
+<div class="actions"><button id="export">Exporter les résultats et mes vérifications en CSV</button><button class="secondary" id="only-new">Afficher les pistes absentes d'OSM</button><button class="secondary" id="reset">Réinitialiser les filtres</button></div>
+<p id="summary" class="sub" role="status"></p></section>
+<div class="layout">
+<section class="card"><h2>Carte des candidats géolocalisés</h2><div id="map"></div><p class="sub">Les points sans position sûre restent consultables dans le tableau. Une adresse identique ou une proximité ne prouve pas que deux sources parlent du même commerce. Tous les points restent non vérifiés.</p></section>
+<section class="card" id="results"><h2>Fiches et vérification Google Maps</h2><div id="selected">Cliquez sur une fiche du tableau ou un point de la carte.</div></section>
+</div>
+<section class="card"><h2>Résultats correspondant aux filtres</h2><div class="tablewrap"><table><thead><tr><th>Établissement / commune</th><th>Département</th><th>Sources</th><th>Type / position</th><th>Action</th></tr></thead><tbody id="body"><tr><td colspan="5">Données en cours de chargement…</td></tr></tbody></table></div></section>
+</main><footer>Sources externes : <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="https://baug.fr/">BAUG</a>, <a href="https://laverie.ouvert.tel/">Laverie Ouvert</a>. Seules les données factuelles nécessaires au rapprochement sont conservées ; les avis et photos ne sont pas copiés. Les contrôles manuels sont sauvegardés localement dans ton navigateur. <a href="./docs/METHODOLOGIE.md">Méthodologie générale</a>.</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./recensement.js"></script>
+</body></html>
