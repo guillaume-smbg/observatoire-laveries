@@ -50,6 +50,35 @@ section{scroll-margin-top:18px}
  .table-wrap{max-height:60vh}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}button{transition:none}}
+
+/* Main page UX: short section navigator, clearer map workspace, less visual fatigue */
+:root{scroll-padding-top:72px}
+header{position:relative;z-index:1000}
+.appnav{position:sticky;top:0;z-index:1001;padding:8px max(16px,calc((100vw - 1480px)/2));margin:12px calc(-1 * max(20px,calc((100vw - 1480px)/2))) -4px;background:#12334f;box-shadow:0 5px 14px rgba(0,0,0,.13)}
+.appnav a{white-space:nowrap}
+main#carte{padding-top:20px;align-items:start}
+main#carte>aside{position:relative;min-width:0}
+main#carte>aside:first-child{position:sticky;top:62px;max-height:calc(100vh - 82px);overflow:auto}
+#map{position:sticky;top:70px;height:min(72vh,800px);min-height:540px;box-shadow:0 5px 18px rgba(27,53,75,.09)}
+main#carte>aside:last-child{position:sticky;top:62px;max-height:calc(100vh - 82px);overflow:auto}
+section.finance{width:min(1480px,calc(100% - 40px));max-width:none;margin:16px auto 22px!important;padding:24px 28px!important}
+.finance h2{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.finance h3{margin-top:22px;padding-top:8px;color:#24516e}
+.finance .fields{gap:14px 18px}
+.finance label{line-height:1.45}
+.table-wrap{scrollbar-color:#9bb2c3 #eef3f8}
+.finance>p.note{max-width:110ch}
+@media(max-width:850px){
+ .appnav{position:static;margin:12px -16px -4px;padding:8px 16px;overflow-x:auto;flex-wrap:nowrap}
+ .appnav a{flex:none}
+ main#carte>aside:first-child,main#carte>aside:last-child,#map{position:static;max-height:none}
+ section.finance{width:calc(100% - 20px);margin:12px auto 18px!important}
+}
+@media(max-width:520px){
+ section.finance{width:calc(100% - 16px);padding:16px!important}
+ .finance h2{font-size:19px}
+ .finance .table-wrap{max-height:58vh}
+}
 </style></head><body><header><h1>Observatoire des laveries</h1><div>Paris · Hauts-de-Seine · Seine-Saint-Denis · Val-de-Marne</div><nav class="appnav" aria-label="Sections du site"><a href="#carte">Carte</a><a href="#observatory">Communes</a><a href="./opportunites.html" style="background:#e0f4e9;color:#13334f;border-color:#9ed4bc">★ Comparateur d’emplacements</a><a href="#rank-dashboard">Quartiers IRIS</a><a href="./recensement.html" style="background:#e8f2fa;color:#12334f;border-color:#9fc2dd">Recensement croisé</a><a href="#osm-inventory">Inventaire OSM</a><a href="#sirene-census">Registre SIRENE</a><a href="#financial-detailed">Prévisionnel</a><a href="https://github.com/guillaume-smbg/observatoire-laveries/blob/main/docs/METHODOLOGIE.md" target="_blank" rel="noopener noreferrer">Méthodologie</a></nav></header><main id="carte"><aside><h2>Carte exploratoire</h2><p><a href="./opportunites.html" class="buttonlike" style="display:block;text-align:center;background:#116b54;color:white;padding:10px;border-radius:8px;text-decoration:none;font-weight:700">Comparer les 50 quartiers prometteurs ↗</a></p><label>Adresse<input id="address" placeholder="Paris 7e"></label><button id="search">Rechercher</button><label>Département<select id="dept"><option value="">Tous</option><option value="75">Paris (75)</option><option value="92">92</option><option value="93">93</option><option value="94">94</option></select></label><button id="load">Relancer une collecte OSM ponctuelle (non exhaustive)</button><p class="note">Les laveries proviennent d'OpenStreetMap à la demande : inventaire non exhaustif, non vérifié. Aucun établissement fictif n'est présenté comme réel.</p><button id="import">Importer un GeoJSON local</button><button id="export" disabled>Exporter les points en CSV</button><input id="file" type="file" accept=".json,.geojson" hidden></aside><div id="map"></div><aside><h2>Analyse</h2><p id="status">Aucune laverie chargée. Importez les données OSM ou un GeoJSON.</p><div class="map-legend"><span><i style="background:#187647"></i>Libre-service renseigné</span><span><i style="background:#1763a6"></i>Nom évocateur</span><span><i style="background:#db8a40"></i>Pressing/non automatique possible</span><span><i style="background:#7b8793"></i>Non classé</span></div><h2 id="count">0 laverie affichée</h2><p id="point">Cliquez sur la carte pour analyser la concurrence à 300, 500 et 1 000 m.</p><div id="competition" aria-live="polite"></div><p class="note">Distances à vol d’oiseau et points OSM non vérifiés. Statistiques INSEE par quartier et indice exploratoire plus bas.</p></aside></main><section class="finance" id="observatory"><h2>Population et analyse d'implantation</h2><p class="note">Les populations communales proviennent de l'API Géo (DGCL/INSEE) et ne correspondent pas aux habitants à proximité immédiate d'une laverie. Les établissements OSM sont non vérifiés. Aucun score démographique n'est affiché sans données infracommunales importées.</p><button id="municipality-load">Actualiser les populations communales</button><p id="data-status" role="status"></p><div class="fields"><label>Rechercher une commune<input id="municipality-filter" placeholder="Paris, Saint-Denis, 92…"></label><label>Trier les communes<select id="municipality-sort"><option value="population">Population décroissante</option><option value="competition">Points OSM à 1 km croissants</option><option value="name">Nom</option></select></label></div><div style="overflow-x:auto"><table><thead><tr><th>Commune (centrer la carte)</th><th>Dépt.</th><th>Population communale</th><th>OSM à 1 km du centre*</th></tr></thead><tbody id="commune-results"><tr><td colspan="4">Chargement des données publiques…</td></tr></tbody></table></div><p class="note">* Le centre communal n'est pas une implantation recommandée. Le comptage n'est disponible qu'après chargement OSM et ne mesure pas la concurrence dans toute la commune.</p><h3>Fiche emplacement</h3><button id="site-refresh">Analyser le point sélectionné sur la carte</button><div id="site-results">Cliquez sur la carte pour sélectionner un emplacement.</div><button id="site-export">Exporter l'analyse en CSV</button><h3>Importer des données infracommunales vérifiables</h3><p class="note">Import local de cellules géolocalisées : indiquez la source et l'année. Le fichier n'est pas transmis à un serveur. Les pourcentages et populations importés ne sont pas vérifiés automatiquement.</p><button id="demography-template">Télécharger le modèle CSV</button><label>Fichier CSV démographique<input type="file" id="demography-file" accept=".csv,text/csv"></label></section><section class="finance" id="rank-dashboard">
   <h2>Classement exploratoire des quartiers IRIS</h2>
   <p class="note">Le score est un <strong>indice de comparaison interne</strong>, pas une prévision de chiffre d'affaires, une preuve de demande ni un avis d'investissement. Les données INSEE 2022 concernent des IRIS entiers ; les établissements OSM sont contributifs et non vérifiés. La concurrence est comptée autour d'un point représentatif de chaque IRIS et non dans tout son périmètre.</p>
