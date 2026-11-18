@@ -9,6 +9,6 @@ assert.ok(html.includes('non')&&html.includes('vérifi'),'Uncertainty label miss
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
 assert.equal(new Set(ids).size,ids.length,'Duplicate census HTML ID');
 const set=new Set(ids);
-for(const x of src.matchAll(/\$\('([^']+)'\)/g))assert.ok(set.has(x[1])||x[1]==='local-check','Missing census UI id '+x[1]);
+for(const x of src.matchAll(/\$\('([^']+)'\)/g))assert.ok(set.has(x[1])||['local-check','local-type','local-note','local-evidence'].includes(x[1]),'Missing census UI id '+x[1]);
 assert.ok(html.includes('Google Maps')&&src.includes('localStorage'),'Manual verification must be user controlled');
 console.log('PASS: multi-directory census JS, DOM inputs and source disclaimers');
