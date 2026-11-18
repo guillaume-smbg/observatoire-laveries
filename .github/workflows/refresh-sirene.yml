@@ -25,6 +25,8 @@ jobs:
           python-version: "3.12"
       - name: Refresh public SIRENE candidates and proximity audit
         run: python scripts/refresh_sirene.py
+      - name: Require complete four-department public snapshot
+        run: node tests/data-integrity.mjs
       - name: Commit evidence snapshot and trigger site redeployment
         run: |
           git config user.name "github-actions[bot]"
@@ -36,3 +38,4 @@ jobs:
             git rebase origin/main
             git push origin HEAD:main
           fi
+

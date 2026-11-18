@@ -8,6 +8,7 @@ import csv
 import datetime as dt
 import json
 import math
+import re
 import urllib.parse
 from pathlib import Path
 
@@ -61,7 +62,17 @@ def main():
             priority+=2;reasons.append("Proche d’une zone du Top 50")
         # Priority is for FIELD REVIEW; high priority does not mean likely open.
         tier="A — à vérifier en priorité" if priority>=6 else "B — à vérifier" if priority>=3 else "C — contrôle standard"
-        query=" ".join(filter(None,[record.get("name",""),record.get("address",""),record.get("postcode",""),"France"]))
+        # Directory addresses may already contain the postal code; avoid
+        # repeating it (some source strings also contain a trailing comma).
+        address=re.sub(r"\s+", " ", str(record.get("address") or "")).strip(" ,")
+        if record.get("postcode"):
+            postcode=str(record["postcode"])
+            address=re.sub(r"\s*,?\s*"+re.escape(postcode)+r"\b\s*", " ", address)
+            address=re.sub(r"\b"+re.escape(postcode)+r"\s*,?\s*", " ", address)
+            address=re.sub(r"\s+Paris\s*$", "", address, flags=re.IGNORECASE)
+        address=re.sub(r"\s+,", ",", address).strip(" ,")
+        address=re.sub(r"\s+", " ", address).strip(" ,")
+        query=" ".join(filter(None,[record.get("name",""),address,record.get("postcode",""),"France"]))
         url="https://www.google.com/maps/search/?api=1&query="+urllib.parse.quote(query)
         out.append({
             "id":record["id"],"nom":record.get("name",""),"adresse":record.get("address",""),
@@ -104,3 +115,4 @@ def main():
 
 if __name__=="__main__":
     main()
+

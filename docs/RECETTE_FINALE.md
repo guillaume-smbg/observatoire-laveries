@@ -1,6 +1,6 @@
 # Recette technique — Observatoire des laveries
 
-**Date de recette : 18 novembre 2026**  
+**Date de recette : 18 novembre 2026 — audit et rafraîchissement complémentaires**
 **Dépôt** : https://github.com/guillaume-smbg/observatoire-laveries  
 **Site** : https://guillaume-smbg.github.io/observatoire-laveries/  
 **Comparateur** : https://guillaume-smbg.github.io/observatoire-laveries/opportunites.html
@@ -15,7 +15,7 @@
 | Croisement OSM / BAUG / Laverie Ouvert | Publié | **1 658 candidats non vérifiés**, dont 1 479 directement géolocalisés |
 | Géocodage officiel IGN/BAN | Publié | **44 adresses supplémentaires** localisées avec numéro, code postal et score vérifiés ; **135 pistes encore non localisées** |
 | Fichier de vérification exhaustive | Publié | **1 658 lignes : A 384 / B 641 / C 633**, ordonnées par priorité de contrôle, sans prétendre que les commerces existent |
-| SIRENE, code historique 96.01B | Publié | 2 370 établissements administrativement actifs, pas nécessairement des laveries |
+| SIRENE, code historique 96.01B | Snapshot publié | **2 370** candidats administrativement actifs (snapshot courant). Le balayage complet relancé pendant cette recette en a trouvé 2 371 ; écart d'une ligne à réconcilier au prochain rafraîchissement. Aucun des deux nombres ne confirme une laverie |
 | SIRENE sans OSM proche (nom commercial évocateur) | Liste publiée | 85 pistes, liens vers recherche Google Maps |
 | INSEE RP 2022 / géographie IRIS 2024 | Publié | 2 695 IRIS |
 | Analyse géographique par rayon 300 / 500 / 1 000 m | Générée | 2 695 IRIS analysés, **2 589 avec indice calculable**, 106 exclus pour qualité insuffisante |
@@ -29,6 +29,7 @@
 - Les tests navigateur Chromium contrôlent le chargement des 2 695 IRIS, les cinquante premières zones distinctes, les scénarios de concurrence OSM/annuaires, le calcul financier réactif, la demande d’isochrones piétons (service simulé pour éviter une dépendance réseau durant le test), les exports CSV, l’impression PDF et l’affichage mobile. Les derniers résultats sont consultables sur https://github.com/guillaume-smbg/observatoire-laveries/actions.
 - Le test navigateur de la carte principale est aussi **réussi**, avec la carte, les données SIRENE et les filtres OSM.
 - Les workflows de validation, de génération de données et de déploiement GitHub Pages doivent tous être contrôlés à chaque évolution : https://github.com/guillaume-smbg/observatoire-laveries/actions. Une réussite CI n’est pas une vérification terrain des laveries.
+- Recette locale du 18 novembre 2026 : `tests/smoke.mjs`, `tests/data-integrity.mjs`, `tests/directories.mjs`, `tests/census-static.mjs`, `tests/geocoded.mjs`, `tests/opportunities.mjs`, `python3 -m py_compile scripts/*.py` réussis. Le test navigateur Playwright n'a pas pu être exécuté dans l'environnement local : téléchargement du navigateur tronqué et Chromium système bloqué par l'interdiction de sockets. Les tests navigateur restent à confirmer sur GitHub Actions.
 
 ## Fonctionnalités livrées
 
@@ -55,3 +56,12 @@
 | Synchronisation des fiches entre appareils | Comparaisons et contrôles stockés localement dans le navigateur, sans serveur |
 
 **Conclusion : la version logicielle est exploitable pour explorer, prioriser et comparer. Elle n'est pas une étude de marché exhaustive certifiée, et ne remplace pas la vérification terrain avant décision d'investissement.**
+
+## Rafraîchissement complémentaire du 18 novembre 2026
+
+- Le balayage SIRENE a lu toutes les pages annoncées : 45/45 pour Paris, 20/20 pour le 92, 19/19 pour le 93 et 16/16 pour le 94, sans erreur ni plafond de pagination. Une nouvelle garde empêche un balayage partiel de remplacer l'instantané complet ou d'alimenter les rapprochements d'adresses.
+- Le recroisement a examiné 135 pages Laverie Ouvert et 115 pages BAUG, dans le respect de robots.txt et de la temporisation du collecteur. Il retrouve 1 658 candidats distincts. Deux URLs BAUG renvoient 404. L'index BAUG annonce 578 fiches à Paris, mais seules 100 fiches du département sont accessibles ; 478 ne sont pas récupérées par les pages publiques accessibles. Aucun résultat n'a été fabriqué pour combler cet écart.
+- Le géocodeur IGN/BAN a ajouté 44 positions d'adresse strictes parmi 179 demandes ; le calcul géographique utilise donc 1 523 pistes positionnées et laisse 135 non localisées. Les adresses restent des indices d'adresse, pas des preuves de commerce. Le service a renvoyé plusieurs HTTP 504 avant la fin ; le seuil n'a pas été assoupli.
+- Le calcul de proximité a été régénéré : 2 695 IRIS, 2 589 indices calculables, 106 non calculables et 50 zones distinctes. Le classement reste une heuristique non calibrée et la concurrence inclut des candidats non vérifiés.
+- Vérification HTTP le 18 novembre : pages principales, recensement, opportunités et fichiers publics de recensement/INSEE/OSM répondent 200 sur GitHub Pages. Ce contrôle ne valide pas l'interaction navigateur.
+

@@ -8,6 +8,8 @@ assert.equal(p.rows.length,p.count,'Number of points disagrees');
 assert.ok(p.source.includes('INSEE')&&p.source.includes('OpenStreetMap')&&p.source.includes('BAUG'),'Crossed source attribution missing');
 assert.ok(p.candidate_total>=1500&&p.candidate_geolocated>=1400,'Cross directory candidate coverage unexpectedly low');
 assert.equal(p.top50_distinct_iris_ids.length,50,'Need 50 regionally distinct candidates');
+assert.ok(Number.isFinite(p.candidate_unlocated)&&p.candidate_unlocated>=0,
+ 'Unlocated directory leads must remain visible in provenance');
 let scored=0;
 for(const v of p.rows){
  assert.ok(['75','92','93','94'].includes(v.department),'Outside target');
@@ -23,6 +25,7 @@ for(const v of p.rows){
      'Public-directory confidence hierarchy incoherent');
    assert.ok(c.directory.all>=c.directory.osm,'Merged directory loses historic OSM points');
    assert.ok(c.directory.address_only>=0&&c.directory.address_only<=c.directory.all,'Bad IGN count');
+   assert.ok(c.directory.address_only<=c.directory.all,'Address-only count cannot exceed all candidates');
  }
  assert.ok(v.catchments['300'].population<=v.catchments['500'].population+5,'Population decreases with increased radius');
  assert.ok(v.catchments['500'].population<=v.catchments['1000'].population+5,'Population decreases with increased radius');
@@ -36,4 +39,15 @@ if(fs.existsSync('data/verification-prioritaire.json')){
  assert.equal(pri.rows.length,p.candidate_total,'Manual verification JSON must cover all directory leads');
  assert.equal(new Set(pri.rows.map(r=>r.id)).size,pri.rows.length,'Manual-review IDs must not duplicate');
  assert.ok(pri.rows.every(r=>['A','B','C'].includes(String(r.priority).charAt(0))),'Unknown priority labels');
+ const queue=fs.readFileSync('data/verification-prioritaire.csv','utf8');
+ for(const line of queue.split(/\r?\n/).slice(1).filter(Boolean)){
+   const cols=line.split(';');
+   const postcode=cols[4];
+   const url=cols[18]||'';
+   if(/^\d{5}$/.test(postcode)&&url){
+     const decoded=decodeURIComponent(url);
+     assert.equal((decoded.match(new RegExp(postcode,'g'))||[]).length,1,'Google search URL duplicates postal code for '+cols[0]);
+   }
+ }
 }
+

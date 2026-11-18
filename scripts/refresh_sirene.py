@@ -165,11 +165,22 @@ def run():
         "not_an_inventory_of_laundromats":True,
         "explanation":"NAF 96.01B inclut des pressings et adresses administratives; source ne certifiant pas un commerce ou une laverie libre-service",
         "departments":meta,"errors":problems,
+        "complete":not problems and all(meta.get(d,{}).get("complete_page_scan") for d in DEPTS),
+        "coverage_status":"complete" if not problems and all(meta.get(d,{}).get("complete_page_scan") for d in DEPTS) else "partial",
         "geographic_osm_proximity_m":45,
         "proximity_matches":len(candidate_links),
         "distinct_osm_proximity_matches":len(matched_ids),
         "rows":result
     }
+    # A partial refresh is useful as a diagnostic, but must never replace a
+    # previously complete public snapshot used by downstream matching. Keep
+    # the diagnostic separately and retain the old canonical data on failure.
+    if not artifact["complete"]:
+        diagnostic=OUT/"sirene-refresh-diagnostic.json"
+        diagnostic.write_text(json.dumps(artifact,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        if not (OUT/"sirene-laundries.json").exists():
+            raise RuntimeError("SIRENE refresh incomplete and no prior complete snapshot exists; refusing publication")
+        raise RuntimeError("SIRENE refresh incomplete; previous public snapshot retained. See sirene-refresh-diagnostic.json")
     (OUT/"sirene-laundries.json").write_text(json.dumps(artifact,ensure_ascii=False,separators=(",",":"))+"\n",encoding="utf-8")
     (OUT/"sirene-audit.json").write_text(json.dumps({
         "generated_at":stamp,"source":BASE,"registered_candidates":len(result),
@@ -203,3 +214,4 @@ def run():
 
 if __name__=="__main__":
     run()
+

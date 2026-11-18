@@ -332,7 +332,11 @@ def main():
     sirene_path=DATA/"sirene-laundries.json"
     sirene=[]
     if sirene_path.exists():
-        sirene=json.loads(sirene_path.read_text(encoding="utf-8")).get("rows",[])
+        sirene_doc=json.loads(sirene_path.read_text(encoding="utf-8"))
+        if sirene_doc.get("complete") is True and sirene_doc.get("coverage_status")=="complete":
+            sirene=sirene_doc.get("rows",[])
+        else:
+            logging.warning("Ignoring incomplete SIRENE snapshot for address hints; no coordinates will be inferred from this refresh.")
     sirene_by_postcode=collections.defaultdict(list)
     for s in sirene:sirene_by_postcode[str(s.get("postcode",""))].append(s)
     for p in baug:
@@ -399,3 +403,4 @@ if __name__=="__main__":
     main()
 
 # First full four-department catalogue reconciliation, 2026-11-18.
+
