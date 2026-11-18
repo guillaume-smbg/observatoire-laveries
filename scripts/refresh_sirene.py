@@ -7,6 +7,8 @@ No API keys and no personal names from legal-entity names are published.
 """
 import datetime as dt
 import json
+import csv
+import re
 import logging
 import math
 import time
@@ -177,6 +179,25 @@ def run():
         "errors":problems,
         "limit":"Proximité ≠ même établissement, pas de confirmation de laverie automatique."
     },ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    # Review candidates with a commercially disclosed, laundry-like trading name.
+    # Search labels are leads only; neither SIRENE nor Google proves operation.
+    pattern=re.compile(r"laverie|lavomatic|speed queen|wash|laundro|lavomat|lavorie", re.I)
+    priority=[r for r in result if not r.get("closest_osm_id")
+              and r.get("commercial_name_present") and pattern.search(r["name"])]
+    priority.sort(key=lambda r:(r["dep"],r["postcode"],r["name"]))
+    csv_path=OUT/"candidats-sirene-sans-osm.csv"
+    with csv_path.open("w",encoding="utf-8-sig",newline="") as out:
+        writer=csv.writer(out,delimiter=";",quoting=csv.QUOTE_ALL)
+        writer.writerow(["SIRET_PUBLIC","NOM_COMMERCIAL_DECLARÉ","DÉPARTEMENT","CODE_POSTAL",
+                         "FICHE_ADMINISTRATIVE","RECHERCHE_GOOGLE_MAPS","STATUT","SOURCE"])
+        for row in priority:
+            google_query=row["name"]+" "+row["postcode"]+" France"
+            url="https://www.google.com/maps/search/?api=1&query="+urllib.parse.quote(google_query)
+            writer.writerow([row["id"],row["name"],row["dep"],row["postcode"],
+                             row["registry_url"],url,
+                             "À VÉRIFIER : pas de point OSM à <=45 m",
+                             "SIRENE NAF 96.01B ; pas preuve de laverie"])
+    logging.info("Prioritized %d non-verified SIRENE commercial-name leads without nearby OSM",len(priority))
     logging.info("SIRENE: %s establishments / %s distinct OSM candidates within 45 m / errors %s",
                  len(result),len(matched_ids),problems)
 
