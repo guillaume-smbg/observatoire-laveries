@@ -141,7 +141,9 @@ def collect_demography():
     code_pattern = re.compile(r"^(?:75|92|93|94)\d{7}$")
     for feature in features:
         props = feature.get("properties") or {}
-        code = next((str(x).strip() for x in props.values() if isinstance(x, (str, int)) and code_pattern.fullmatch(str(x).strip())), "")
+        code = str(props.get("code_iris") or "").strip()
+        if not code_pattern.fullmatch(code):
+            code = next((str(x).strip() for x in props.values() if isinstance(x, (str, int)) and code_pattern.fullmatch(str(x).strip())), "")
         if code not in housing or not feature.get("geometry"):
             continue
         try:
@@ -150,6 +152,10 @@ def collect_demography():
                 geom = geom.buffer(0)
             point = geom.representative_point()
             matched[code] = [round(point.y, 6), round(point.x, 6)]
+            if props.get("nom_iris"):
+                housing[code]["name"] = str(props["nom_iris"])
+            if props.get("nom_com"):
+                housing[code]["commune"] = str(props["nom_com"])
             clipped = geom.simplify(0.00008, preserve_topology=True)
             polygons[code] = {"type": "Feature", "properties": {"id": code}, "geometry": mapping(clipped)}
         except Exception:
@@ -242,7 +248,7 @@ def collect_osm():
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    jobs = (("iris", collect_demography), ("osm", collect_osm))
+    # OSM downloads are handled by the independent Geofabrik PBF workflow.\n    # Never overwrite its verified-department OSM snapshot with an incomplete Overpass response.\n    jobs = (("iris", collect_demography),)
     errors = {}
     counts = {}
     for name, work in jobs:
