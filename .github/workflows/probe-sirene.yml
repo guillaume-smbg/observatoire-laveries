@@ -1,0 +1,15 @@
+name: Diagnose SIRENE public search
+on:
+  push:
+    paths:
+      - scripts/probe_sirene.py
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check public API response schema
+        run: python3 scripts/probe_sirene.py
