@@ -189,7 +189,7 @@ def collect_osm():
         # The administrative-area filter is essential: a bounding box alone also includes outer suburbs.
         query = ('[out:json][timeout:130];'
                  'area["boundary"="administrative"]["admin_level"="6"]["ref:INSEE"="' + dep + '"]->.sector;'
-                 '(nwr(area.sector)["shop"="laundry"];nwr(area.sector)["amenity"="laundry"];);'
+                 '(nwr["shop"="laundry"](area.sector);nwr["amenity"="laundry"](area.sector););'
                  'out center tags;')
         payload = urllib.parse.urlencode({"data": query}).encode()
         response = None
