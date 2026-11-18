@@ -30,3 +30,10 @@ for(const v of p.rows){
 }
 assert.ok(scored>=1000,'Most scores unavailable');
 console.log('PASS: '+p.count+' georeferenced IRIS; '+scored+' scorable; three nested radii; all sources labelled');
+
+if(fs.existsSync('data/verification-prioritaire.json')){
+ const pri=JSON.parse(fs.readFileSync('data/verification-prioritaire.json','utf8'));
+ assert.equal(pri.rows.length,p.candidate_total,'Manual verification JSON must cover all directory leads');
+ assert.equal(new Set(pri.rows.map(r=>r.id)).size,pri.rows.length,'Manual-review IDs must not duplicate');
+ assert.ok(pri.rows.every(r=>['A','B','C'].includes(String(r.priority).charAt(0))),'Unknown priority labels');
+}
