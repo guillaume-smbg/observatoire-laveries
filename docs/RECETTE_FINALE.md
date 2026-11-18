@@ -15,7 +15,7 @@
 | Croisement OSM / BAUG / Laverie Ouvert | Publié | **1 658 candidats non vérifiés**, dont 1 479 directement géolocalisés |
 | Géocodage officiel IGN/BAN | Publié | **44 adresses supplémentaires** localisées avec numéro, code postal et score vérifiés ; **135 pistes encore non localisées** |
 | Fichier de vérification exhaustive | Publié | **1 658 lignes : A 384 / B 641 / C 633**, ordonnées par priorité de contrôle, sans prétendre que les commerces existent |
-| SIRENE, code historique 96.01B | Publié | **2 371** établissements administrativement actifs ; balayage complet des 100 pages annoncées dans les quatre départements, pas nécessairement des laveries |
+| SIRENE, code historique 96.01B | Snapshot publié | **2 370** candidats administrativement actifs (snapshot courant). Le balayage complet relancé pendant cette recette en a trouvé 2 371 ; écart d'une ligne à réconcilier au prochain rafraîchissement. Aucun des deux nombres ne confirme une laverie |
 | SIRENE sans OSM proche (nom commercial évocateur) | Liste publiée | 85 pistes, liens vers recherche Google Maps |
 | INSEE RP 2022 / géographie IRIS 2024 | Publié | 2 695 IRIS |
 | Analyse géographique par rayon 300 / 500 / 1 000 m | Générée | 2 695 IRIS analysés, **2 589 avec indice calculable**, 106 exclus pour qualité insuffisante |
