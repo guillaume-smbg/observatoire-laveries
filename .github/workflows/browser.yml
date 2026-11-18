@@ -1,0 +1,31 @@
+name: Browser smoke test
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - tests/browser.mjs
+      - .github/workflows/browser.yml
+permissions:
+  contents: read
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Start local static web server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/observatoire-http.log 2>&1 &
+          sleep 2
+      - run: node tests/browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: observatoire-smoke
+          path: /tmp/observatoire-smoke.png
+          if-no-files-found: ignore
