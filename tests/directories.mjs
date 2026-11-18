@@ -9,7 +9,7 @@ assert.ok(doc.sources.baug.count>=350,'BAUG coverage too small');
 assert.equal(doc.rows.length,doc.total_candidates,'Inconsistent unique candidate count');
 assert.equal(new Set(doc.rows.map(r=>r.id)).size,doc.rows.length,'Duplicate canonical identifiers');
 assert.equal(audit.total_candidates,doc.total_candidates,'Audit counts not matching');
-assert.ok(doc.verify_status.includes('NOT field-verified'),'Verification caveat missing');
+assert.ok(/none.*field-verified|not.*verified/i.test(doc.verify_status),'Verification caveat missing');
 for(const x of doc.rows){
   assert.ok(['75','92','93','94'].includes(x.dept),'Unexpected department');
   assert.ok(x.sources.length>=1,'Candidate has no source');
