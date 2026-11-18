@@ -34,10 +34,10 @@ jobs:
         run: python -m pip install "shapely>=2,<3"
       - name: Recalculate all 300/500/1000m geographic catchments
         run: python scripts/build_opportunities.py
-      - name: Validate generated statistics
-        run: node tests/opportunities.mjs
       - name: Build prioritized manual competitor verification worklist
         run: python scripts/build_review_queue.py
+      - name: Validate generated statistics and worklist
+        run: node tests/opportunities.mjs
       - name: Publish generated public-data artifacts
         run: |
           git config user.name "github-actions[bot]"
