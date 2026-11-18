@@ -135,8 +135,9 @@ def collect_demography():
             logging.warning("Geometry URL failed: %s", exc)
     if not features:
         raise RuntimeError("No geographical reference source")
-    from shapely.geometry import shape
+    from shapely.geometry import shape, mapping
     matched = {}
+    polygons = {}
     code_pattern = re.compile(r"^(?:75|92|93|94)\d{7}$")
     for feature in features:
         props = feature.get("properties") or {}
@@ -144,8 +145,13 @@ def collect_demography():
         if code not in housing or not feature.get("geometry"):
             continue
         try:
-            point = shape(feature["geometry"]).representative_point()
+            geom = shape(feature["geometry"])
+            if not geom.is_valid:
+                geom = geom.buffer(0)
+            point = geom.representative_point()
             matched[code] = [round(point.y, 6), round(point.x, 6)]
+            clipped = geom.simplify(0.00008, preserve_topology=True)
+            polygons[code] = {"type": "Feature", "properties": {"id": code}, "geometry": mapping(clipped)}
         except Exception:
             continue
     result = []
@@ -158,6 +164,13 @@ def collect_demography():
     if len(result) < 200:
         raise RuntimeError("IRIS join failed; no data file overwritten")
     result.sort(key=lambda x: x["id"])
+    save("iris-2022-contours.geojson", {
+        "type": "FeatureCollection",
+        "metadata": {"source": "Contours IRIS 2024 coédition INSEE-IGN via Région Île-de-France",
+                     "source_url": GEO_URLS[0], "geography_year": 2024,
+                     "simplification": "0.00008 degree, preserved topology"},
+        "features": [polygons[row["id"]] for row in result if row["id"] in polygons]
+    })
     save("iris-2022.json", {
         "source": "INSEE RP 2022 — bases IRIS logement et population ; IGN/Insee contours IRIS 2024 via data.iledefrance.fr",
         "source_urls": [INSEE_LOG, INSEE_POP, GEO_URLS[0]],
