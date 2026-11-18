@@ -6,6 +6,7 @@ on:
   push:
     paths:
       - scripts/build_opportunities.py
+      - scripts/build_review_queue.py
       - .github/workflows/opportunities.yml
   workflow_run:
     workflows:
@@ -35,11 +36,13 @@ jobs:
         run: python scripts/build_opportunities.py
       - name: Validate generated statistics
         run: node tests/opportunities.mjs
+      - name: Build prioritized manual competitor verification worklist
+        run: python scripts/build_review_queue.py
       - name: Publish generated public-data artifacts
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/opportunities.json data/opportunities-audit.json
+          git add data/opportunities.json data/opportunities-audit.json data/verification-prioritaire.csv data/verification-prioritaire-audit.json
           if ! git diff --cached --quiet; then
             git commit -m "data: recalculate location catchments from INSEE and OSM"
             git fetch origin main
