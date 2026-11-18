@@ -13,3 +13,5 @@ for name,url in sources.items():
             print(name, "STATUS", r.status, "TYPE",r.headers.get("content-type"),"LENGTH",r.headers.get("content-length"),"SECONDS",round(time.monotonic()-t,1),flush=True)
     except Exception as e:
         print(name,"ERROR",str(e)[:250],"SECONDS",round(time.monotonic()-t,1),flush=True)
+
+# Run diagnostics after workflow registration.
