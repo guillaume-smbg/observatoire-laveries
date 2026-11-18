@@ -23,3 +23,5 @@ for u in urls:
   print("TOTAL H3",len(soup.find_all('h3')),"TOTAL ARTICLE",len(soup.find_all('article')),"total scripts",len(soup.find_all('script')))
   print("CITY_LINKS",[x.get("href") for x in soup.select("a[href]") if "/ville/" in x.get("href","") or re.search(r"/(75|93)/[\w-]+/$",x.get("href",""))][:15])
  except Exception as e:print('ERROR',str(e))
+
+# This probe reads only robots-permitted listing pages.
