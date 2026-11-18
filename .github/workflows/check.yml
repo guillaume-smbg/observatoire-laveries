@@ -17,4 +17,5 @@ jobs:
       - run: node tests/smoke.mjs
       - run: node tests/data-integrity.mjs
       - run: node tests/directories.mjs
+      - run: node tests/census-static.mjs
       - run: python3 -m py_compile scripts/refresh_data.py scripts/refresh_geofabrik.py scripts/refresh_sirene.py scripts/merge_directories.py
