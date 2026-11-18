@@ -46,11 +46,11 @@
 <p id="sirene-source" role="status">Chargement de la source SIRENE…</p>
 <div class="fields">
 <label>Département<select id="sirene-dept"><option value="">75 · 92 · 93 · 94</option><option value="75">Paris</option><option value="92">Hauts-de-Seine</option><option value="93">Seine-Saint-Denis</option><option value="94">Val-de-Marne</option></select></label>
-<label>Filtre administratif<select id="sirene-scope"><option value="">Tous les établissements déclarés</option><option value="unmapped">Sans OSM proche : à rechercher</option><option value="mapped">Avec OSM proche : à recouper</option></select></label>
+<label>Filtre administratif<select id="sirene-scope"><option value="">Tous les établissements déclarés</option><option value="unmapped">Sans OSM proche : à rechercher</option><option value="mapped">Avec OSM proche : à recouper</option><option value="unmapped_name">Priorité : nom commercial évoquant une laverie et aucun OSM proche</option></select></label>
 <label>Recherche par commune/code postal<input id="sirene-search" placeholder="75007, Boulogne…"></label>
 </div>
 <p id="sirene-summary" role="status"></p>
-<div class="table-wrap"><table><thead><tr><th>Nom commercial déclaré / secteur</th><th>Dépt.</th><th>OSM dans 45 m</th><th>Registre officiel</th></tr></thead><tbody id="sirene-body"><tr><td colspan="4">Données SIRENE non encore chargées.</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Nom commercial déclaré / secteur</th><th>Dépt.</th><th>OSM dans 45 m</th><th>Sources à vérifier</th></tr></thead><tbody id="sirene-body"><tr><td colspan="4">Données SIRENE non encore chargées.</td></tr></tbody></table></div>
 <button id="sirene-export">Exporter les candidats administratifs en CSV</button>
 <p class="note">La liste n'affiche pas les noms personnels des entrepreneurs individuels. Les coordonnées et la situation administrative ne démontrent ni un commerce ouvert au public ni son statut de laverie automatique.</p>
 </section>
