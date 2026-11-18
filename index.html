@@ -18,6 +18,9 @@
     </div>
   </details>
   <label class="inline-option"><input id="rank-show-markers" type="checkbox" checked> Afficher les points représentatifs des 100 premiers IRIS sur la carte</label>
+  <label class="inline-option"><input id="rank-show-contours" type="checkbox"> Afficher les contours IRIS et la carte thématique (chargement à la demande)</label>
+  <label>Indicateur à représenter sur les contours<select id="rank-heat-metric"><option value="score">Indice exploratoire (si calculable)</option><option value="small_pct">Part des logements &lt;40 m²</option><option value="renters_pct">Part des locataires</option><option value="population">Nombre d'habitants de l'IRIS</option></select></label>
+  <p id="rank-contour-info" class="note">Le fond IRIS n'est chargé qu'en activant la case correspondante.</p>
   <p id="rank-summary" role="status">Recherche des données officielles en cours…</p>
   <div class="table-wrap"><table><thead><tr><th>Commune / IRIS</th><th>Habitants</th><th>Résidences principales</th><th>Log. &lt;40 m²</th><th>Locataires</th><th>OSM proche*</th><th>Indice</th></tr></thead><tbody id="rank-body"></tbody></table></div>
   <p class="note">* Nombre de points OSM dans le rayon choisi autour du point représentatif de l'IRIS. « ND » = source absente ou incomplète. Les données de recensement et l'inventaire OSM n'ont pas le même millésime.</p>
