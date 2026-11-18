@@ -1,6 +1,6 @@
 # Observatoire des laveries
 
-[**Ouvrir la carte publique**](https://guillaume-smbg.github.io/observatoire-laveries/) · [**Comparer les quartiers / opportunités**](https://guillaume-smbg.github.io/observatoire-laveries/opportunites.html) · [Méthodologie](docs/METHODOLOGIE.md)
+[**Ouvrir la carte publique**](https://guillaume-smbg.github.io/observatoire-laveries/) · [**Comparer les quartiers / opportunités**](https://guillaume-smbg.github.io/observatoire-laveries/opportunites.html) · [**Recensement croisé OSM, BAUG et Laverie Ouvert**](https://guillaume-smbg.github.io/observatoire-laveries/recensement.html) · [Méthodologie](docs/METHODOLOGIE.md)
 
 Application publique **100 % gratuite**, indépendante de SMBG, hébergée dans son propre dépôt GitHub Pages, sans Cloudflare.
 
@@ -8,6 +8,7 @@ Application publique **100 % gratuite**, indépendante de SMBG, hébergée dans 
 
 - Carte Leaflet/OpenStreetMap, recherche par adresse, filtres, distances de concurrence de 300, 500 et 1 000 m, exports GeoJSON/CSV et liens de recherche Google Maps.
 - **Recensement indépendant OSM** à partir d'un téléchargement intégral de l'extrait Île-de-France de Geofabrik, découpage aux limites administratives des quatre départements, distinction des indications de libre-service et audit des ajouts, suppressions et doublons potentiels.
+- **Nouvel inventaire croisé OSM + BAUG + Laverie Ouvert** : 1 658 candidats issus de 2 846 entrées brutes, dont 1 479 géolocalisés, 729 absents d'OSM et 858 recoupés par plusieurs sources. Ces chiffres sont des **candidats non vérifiés**, pas des laveries actives confirmées. [Audit détaillé](docs/RECENSEMENT_CROISE.md).
 - **Deuxième source officielle SIRENE** : balayage paginé des établissements actifs et diffusibles sous le code 96.01B, rapprochements géographiques avec OSM à 45 m (indice seulement) et liste de candidats à examiner.
 - **INSEE RP 2022 / géographie IRIS 2024** : habitants, résidences principales, proportions de petits logements et de locataires ; carte thématique et classement exploratoire pondéré.
 - Contrôles locaux manuels (Google Maps, contrôle terrain, exclusions), enregistrés uniquement dans le navigateur et exportables.
@@ -38,6 +39,7 @@ Application publique **100 % gratuite**, indépendante de SMBG, hébergée dans 
 ## Flux de données et publication
 
 - `.github/workflows/refresh-geofabrik.yml` : extraction OSM hebdomadaire depuis un nouvel extrait PBF, source, audit de doublons et variations.
+- `.github/workflows/merge-directories.yml` : extraction limitée aux pages d'annuaires autorisées par robots.txt, rapprochement prudent des adresses, contrôle des trous de couverture et publication de la liste des candidats.
 - `.github/workflows/refresh-sirene.yml` : nouvelle recherche SIRENE, contrôle de diffusion, recoupement spatial et rapport de couverture.
 - `.github/workflows/refresh-data.yml` : statistiques officielles INSEE IRIS.
 - `.github/workflows/opportunities.yml` : recalcul reproductible hebdomadaire des cercles démographiques et des 50 zones IRIS à explorer, depuis les données à jour.
