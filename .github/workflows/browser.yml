@@ -7,6 +7,9 @@ on:
       - tests/opportunities-browser.mjs
       - opportunites.js
       - opportunites.html
+      - recensement.html
+      - recensement.js
+      - tests/census-browser.mjs
       - .github/workflows/browser.yml
 permissions:
   contents: read
@@ -27,6 +30,7 @@ jobs:
           sleep 2
       - run: node tests/browser.mjs
       - run: node tests/opportunities-browser.mjs
+      - run: node tests/census-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -34,4 +38,5 @@ jobs:
           path: |
             /tmp/observatoire-smoke.png
             /tmp/observatoire-opportunites.png
+            /tmp/observatoire-recensement.png
           if-no-files-found: ignore
