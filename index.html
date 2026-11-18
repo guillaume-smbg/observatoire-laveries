@@ -29,11 +29,11 @@
 </section>
 <section class="finance" id="osm-inventory">
   <h2>Inventaire OSM et contrôles terrain</h2>
-  <p class="note">La catégorie OpenStreetMap « laundry » peut inclure des pressings. Aucun des établissements ne bénéficie d'une vérification préalable. Un statut sélectionné ici constitue seulement <strong>ton propre contrôle local</strong> et n'est pas publié à d'autres visiteurs.</p>
+  <p class="note">La catégorie OpenStreetMap « laundry » peut inclure des pressings. <strong>Rechercher sur Google Maps</strong> ouvre une recherche dans un nouvel onglet : tu peux examiner le statut, les photos et les avis récents. Une fiche Google concordante <strong>ne remplace pas une vérification sur place</strong>. Aucun contrôle Google n'est fait automatiquement, et tes statuts restent enregistrés dans ce navigateur.</p>
   <div class="fields">
     <label>Recherche<input id="osm-search" placeholder="Nom, rue ou référence OSM"></label>
     <label>Département<select id="osm-dept"><option value="">Tous</option><option value="75">75</option><option value="92">92</option><option value="93">93</option><option value="94">94</option></select></label>
-    <label>Contrôle local<select id="osm-status"><option value="">Tous les statuts</option><option value="pending">À vérifier</option><option value="confirmed">Contrôlé sur place</option><option value="excluded">À exclure</option></select></label>
+    <label>Contrôle local<select id="osm-status"><option value="">Tous les statuts</option><option value="pending">À vérifier</option><option value="google_seen">Fiche Google concordante (non vérifié sur place)</option><option value="confirmed">Contrôlé sur place</option><option value="excluded">À exclure</option></select></label>
   </div>
   <p id="osm-inventory-summary"></p>
   <div class="table-wrap"><table><thead><tr><th>Établissement / adresse</th><th>Dépt.</th><th>Libre-service indiqué</th><th>Statut local</th></tr></thead><tbody id="osm-inventory-body"></tbody></table></div>
