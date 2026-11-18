@@ -163,6 +163,18 @@
       E('osm-inventory-summary').textContent='Contrôle local enregistré dans ce navigateur. Exportez le CSV pour conserver une sauvegarde.';
     });
   }
+  window.addEventListener('observatoire-data-changed',event=>{
+    const kind=event.detail?.kind||'manual';
+    if(kind==='overpass'){
+      osm=data.map(p=>({...p,dep:p.dep||'',source:'OSM live — rectangle approximatif'}));
+      meta={generated_at:new Date().toISOString(),failed_departments:['75','92','93','94']};
+      E('osm-source').textContent='Collecte OSM ponctuelle en rectangle, non exhaustive et hors zonage administratif exact ; indices désactivés.';
+    }else{
+      osm=null;meta=null;
+      E('osm-source').textContent='Points personnels importés : la provenance n’est pas contrôlée et aucun classement OSM n’est calculé.';
+    }
+    display();inventory();
+  });
   E('osm-export-reviews').onclick=()=>{
     if(!osm)return;
     download('observatoire-verifications-locales.csv',csv([
