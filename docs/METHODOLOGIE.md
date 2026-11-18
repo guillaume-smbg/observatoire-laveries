@@ -57,3 +57,35 @@ Chaque fiche OSM de la carte et de l'inventaire dispose d'un lien « Rechercher 
 **Pourquoi ne pas importer automatiquement Google Places dans cette carte gratuite ?** L'API officielle Google Places est soumise à une tarification à l'usage, à des conditions de stockage et aux restrictions d'affichage sur fond de carte non Google. L'utilisation du lien vers Google Maps reste gratuite, conserve l'architecture GitHub Pages + Leaflet/OpenStreetMap et évite d'enregistrer un secret API dans le site. Ne pas aspirer ou republier les avis, photos, notes ou données Places.
 
 Pour constituer une seconde source réutilisable en open data, compléter avec **SIRENE** (INSEE) : enregistrer seulement des données d'établissements diffusibles, l'activité et l'état administratif, en rappelant que la sous-classe 96.01B (blanchisserie-teinturerie de détail, NAF Rév.2) comprend aussi le pressing et ne certifie ni un point de vente réellement ouvert ni un service automatique.
+
+## 9. Classement des zones IRIS et estimations en 300 / 500 / 1 000 m
+
+Le module public `opportunites.html` exploite les données produites par `scripts/build_opportunities.py` et `.github/workflows/opportunities.yml`. Il traite les zones IRIS pour lesquelles les statistiques et les polygones officiels sont disponibles. Il utilise un **point représentatif à l'intérieur de chaque zone**, qui n'est ni une adresse de commerce ni une surface disponible.
+
+### Population et logements dans les cercles
+
+Pour chaque zone IRIS recoupant un cercle de 300, 500 ou 1 000 mètres, les habitants et résidences principales contributifs sont multipliés par la **fraction surfacique** de l'IRIS contenue dans le cercle, puis additionnés. Les proportions de logements de moins de 40 m² et de locataires utilisent des nombres de résidences principales ainsi estimés comme poids. Hypothèse forte : **distribution uniforme des habitants et logements à l'intérieur de chaque IRIS**, souvent incorrecte à l'échelle de la rue. Les distances proviennent d'une approximation métrique plane locale sur coordonnées longitude/latitude ; elles **ne sont pas des itinéraires piétons ni des isochrones**.
+
+Les rayons débordant de la région d'étude peuvent manquer de logements et de concurrents externes. La surface territoriale réellement couverte est mesurée. Un indice de potentiel **n'est pas proposé si cette couverture est inférieure à 80 %** ou si les principales statistiques sont absentes.
+
+### Indice non calibré
+
+Pour le rayon choisi, le score exploratoire affiché sur la page Opportunités utilise :
+
+- 38 % : résidences principales estimées dans le rayon, normalisées par le 90e percentile régional (plafond de 100 points) ;
+- 25 % : part estimée des logements de moins de 40 m² ;
+- 22 % : part estimée des logements occupés par des locataires ;
+- 15 % : facteur de concurrence indicatif `max(0,100 - 16 × nombre_de_points_OSM)`.
+
+Le visiteur choisit le périmètre (300/500/1 000 m) et le niveau de preuves OSM à inclure (tous les points, libre-service renseigné, ou libre-service plus noms évocateurs). Le classement recalculé peut donc varier selon les hypothèses. Le score n'est **pas** un modèle de conversion des habitants en visites et ne constitue pas une prédiction du CA.
+
+La sélection par défaut retient au maximum **50 zones distinctes**, avec un espacement géographique d'au moins 650 m entre leurs points représentatifs, afin d'éviter d'afficher plusieurs fois le même bassin approximatif.
+
+### Modèle économique par emplacement
+
+Chaque zone sauvegardée a un loyer et un nombre de cycles/jour saisis **manuellement**. Les autres variables (prix HT du lavage, coûts variables, charges fixes, investissement, emprunt, intérêt et durée) sont paramétrées par le visiteur. La formule de flux mensuel est :
+`cycles/jour × 30,4375 × (prix HT - coûts variables HT) + marge services - loyer HT - charges fixes HT - mensualité du prêt`.
+
+L'application présente trois variantes d'activité : **65 %, 100 % et 135 %** des cycles journaliers saisis. La valeur initiale est une simple hypothèse, jamais une conséquence du score de potentiel. Elle est éditable séparément pour chaque zone. La comparaison est sauvegardée dans le navigateur, exportable en CSV et imprimable vers PDF à l'aide de la fonction d'impression du navigateur.
+
+Ce module ne remplace pas la validation terrain des laveries, une étude piétonne, un relevé de loyers, un prévisionnel fiscal ni une décision d'investissement.
