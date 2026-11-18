@@ -15,7 +15,7 @@
 | Croisement OSM / BAUG / Laverie Ouvert | Publié | **1 658 candidats non vérifiés**, dont 1 479 directement géolocalisés |
 | Géocodage officiel IGN/BAN | Publié | **44 adresses supplémentaires** localisées avec numéro, code postal et score vérifiés ; **135 pistes encore non localisées** |
 | Fichier de vérification exhaustive | Publié | **1 658 lignes : A 384 / B 641 / C 633**, ordonnées par priorité de contrôle, sans prétendre que les commerces existent |
-| SIRENE, code historique 96.01B | Snapshot publié | **2 370** candidats administrativement actifs (snapshot courant). Le balayage complet relancé pendant cette recette en a trouvé 2 371 ; écart d'une ligne à réconcilier au prochain rafraîchissement. Aucun des deux nombres ne confirme une laverie |
+| SIRENE, code historique 96.01B | Publié | **2 371** établissements administrativement actifs ; balayage complet des 100 pages annoncées dans les quatre départements, pas nécessairement des laveries |
 | SIRENE sans OSM proche (nom commercial évocateur) | Liste publiée | 85 pistes, liens vers recherche Google Maps |
 | INSEE RP 2022 / géographie IRIS 2024 | Publié | 2 695 IRIS |
 | Analyse géographique par rayon 300 / 500 / 1 000 m | Générée | 2 695 IRIS analysés, **2 589 avec indice calculable**, 106 exclus pour qualité insuffisante |
@@ -47,7 +47,7 @@
 
 | Besoin | Pourquoi ce n'est pas certifié |
 |---|---|
-| Inventaire exhaustif des laveries automatiques ouvertes | Les 1 658 candidats sont issus de trois annuaires non exhaustifs ; les fermetures, pressings et doublons ne peuvent être éliminés sans contrôles Google manuels et/ou terrain. BAUG annonce encore 486 fiches non accessibles dans ses index publics |
+| Inventaire exhaustif des laveries automatiques ouvertes | Les 1 658 candidats sont issus de trois annuaires non exhaustifs ; les fermetures, pressings et doublons ne peuvent être éliminés sans contrôles Google manuels et/ou terrain. BAUG annonce 478 fiches parisiennes non accessibles dans l’index consulté |
 | Doublons / établissements fermés | Les indices techniques ne peuvent pas certifier un établissement fermé ou doublonné |
 | Isochrones piétons réels | Contours piétons proposés à la demande via le démonstrateur Valhalla, sous réserve de disponibilité ; ils ne servent pas au score ni aux estimations de population, toujours fondés sur des cercles géométriques |
 | Population exacte dans un cercle | Estimation par **uniformité d'occupation des IRIS**, non comptage par adresse |
@@ -59,9 +59,8 @@
 
 ## Rafraîchissement complémentaire du 18 novembre 2026
 
-- Le balayage SIRENE a lu toutes les pages annoncées : 45/45 pour Paris, 20/20 pour le 92, 19/19 pour le 93 et 16/16 pour le 94, sans erreur ni plafond de pagination. Une nouvelle garde empêche un balayage partiel de remplacer l'instantané complet ou d'alimenter les rapprochements d'adresses.
+- Le balayage SIRENE a lu toutes les pages annoncées : 45/45 pour Paris, 20/20 pour le 92, 19/19 pour le 93 et 16/16 pour le 94, sans erreur ni plafond de pagination. La collecte suivante a réconcilié le décalage d'une ligne et publié 2 371 candidats dans le snapshot complet. Une nouvelle garde empêche un balayage partiel de remplacer l'instantané complet ou d'alimenter les rapprochements d'adresses.
 - Le recroisement a examiné 135 pages Laverie Ouvert et 115 pages BAUG, dans le respect de robots.txt et de la temporisation du collecteur. Il retrouve 1 658 candidats distincts. Deux URLs BAUG renvoient 404. L'index BAUG annonce 578 fiches à Paris, mais seules 100 fiches du département sont accessibles ; 478 ne sont pas récupérées par les pages publiques accessibles. Aucun résultat n'a été fabriqué pour combler cet écart.
 - Le géocodeur IGN/BAN a ajouté 44 positions d'adresse strictes parmi 179 demandes ; le calcul géographique utilise donc 1 523 pistes positionnées et laisse 135 non localisées. Les adresses restent des indices d'adresse, pas des preuves de commerce. Le service a renvoyé plusieurs HTTP 504 avant la fin ; le seuil n'a pas été assoupli.
 - Le calcul de proximité a été régénéré : 2 695 IRIS, 2 589 indices calculables, 106 non calculables et 50 zones distinctes. Le classement reste une heuristique non calibrée et la concurrence inclut des candidats non vérifiés.
 - Vérification HTTP le 18 novembre : pages principales, recensement, opportunités et fichiers publics de recensement/INSEE/OSM répondent 200 sur GitHub Pages. Ce contrôle ne valide pas l'interaction navigateur.
-
