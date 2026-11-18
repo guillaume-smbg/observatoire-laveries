@@ -18,7 +18,7 @@ const labels={
 };
 const statusKey='laveries-croisement-verifications-v1';
 let reviews={};try{reviews=JSON.parse(localStorage.getItem(statusKey)||'{}')||{}}catch(_){}
-let doc=null,audit=null,priorityDoc=null,priorityMap=new Map(),rows=[],filtered=[],markers=null,focus=null;
+let doc=null,audit=null,priorityDoc=null,priorityMap=new Map(),rows=[],filtered=[],markers=null,focus=null,geocodeNotice='';
 const map=L.map('map').setView([48.855,2.35],11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
 markers=L.layerGroup().addTo(map);
@@ -161,8 +161,8 @@ async function start(){
         added++;
         return {...x,lat:y.lat,lon:y.lon,geocoded_by_ban:true,geocoding_score:y.score};
       });
-    }
-  }
+    }else geocodeNotice='Les positions IGN/BAN ont été ignorées car elles correspondent à une version différente du recensement.';
+  }else geocodeNotice='Le fichier de positions IGN/BAN est indisponible ; aucune adresse supplémentaire n’est affichée.';
   if(priorities?.ok){
     priorityDoc=await priorities.json();
     if(priorityDoc.directory_generated_at===doc.generated_at){
@@ -179,7 +179,7 @@ async function start(){
   $('count-baug').textContent=fr(doc.sources?.baug?.count);
   $('count-total').textContent=fr(doc.total_candidates);
   $('count-geo').textContent=fr(rows.filter(x=>x.lat!==null).length);
-  $('loading').textContent='Recoupement disponible, dont '+fr(added)+' adresse(s) IGN/BAN ajoutée(s). Aucune fiche ne devient un commerce confirmé par géocodage.';
+  $('loading').textContent='Recoupement disponible. '+(geocodeNotice||fr(added)+' adresse(s) IGN/BAN ajoutée(s).')+' Aucune fiche ne devient un commerce confirmé par géocodage.';
   paintAudit();render();
  }catch(e){
   $('loading').textContent='Recoupement indisponible : '+e.message+'. L’inventaire OSM initial reste consultable sur la carte principale.';
