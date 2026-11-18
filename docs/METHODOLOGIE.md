@@ -48,3 +48,12 @@ Le site est statique sur GitHub Pages, sans service payant, sans mot de passe ni
 
 ## 7. Limites restantes et validation métier
 Aucun recensement exhaustif de laveries automatiques ne peut être certifié sans vérifications complémentaires sur place. Le score heuristique n'est pas calibré sur des performances réelles de magasins. Il faudra obtenir des prix effectivement pratiqués, établir la localisation exacte des installations, valider les coûts d'eau/énergie, contraintes techniques et accessibilité, puis confronter les résultats aux exploitants.
+
+## 8. Vérification complémentaire sur Google Maps — facultative et manuelle
+Chaque fiche OSM de la carte et de l'inventaire dispose d'un lien « Rechercher sur Google Maps ». Ce lien transmet une requête de recherche construite à partir du nom et de l'adresse OSM, ou de coordonnées OSM si le nom est absent. Il ne prouve pas l'identité de l'établissement retrouvé, et aucun détail Google (nom, avis, note, statut) n'est collecté ou conservé automatiquement.
+
+**Statuts distincts :** « À vérifier » ; « Fiche Google concordante (non vérifié sur place) » ; « Contrôlé sur place » ; « À exclure ». Le deuxième statut atteste seulement du jugement manuel de l'utilisateur à la date indiquée, et non d'une validation de Google ou d'une visite sur site. Les statuts sont enregistrés localement et exportables en CSV.
+
+**Pourquoi ne pas importer automatiquement Google Places dans cette carte gratuite ?** L'API officielle Google Places est soumise à une tarification à l'usage, à des conditions de stockage et aux restrictions d'affichage sur fond de carte non Google. L'utilisation du lien vers Google Maps reste gratuite, conserve l'architecture GitHub Pages + Leaflet/OpenStreetMap et évite d'enregistrer un secret API dans le site. Ne pas aspirer ou republier les avis, photos, notes ou données Places.
+
+Pour constituer une seconde source réutilisable en open data, compléter avec **SIRENE** (INSEE) : enregistrer seulement des données d'établissements diffusibles, l'activité et l'état administratif, en rappelant que la sous-classe 96.01B (blanchisserie-teinturerie de détail, NAF Rév.2) comprend aussi le pressing et ne certifie ni un point de vente réellement ouvert ni un service automatique.
