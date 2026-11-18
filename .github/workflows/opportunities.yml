@@ -1,0 +1,40 @@
+name: Generate opportunity areas
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "40 5 * * 6"
+  push:
+    paths:
+      - scripts/build_opportunities.py
+      - .github/workflows/opportunities.yml
+permissions:
+  contents: write
+concurrency:
+  group: generate-opportunities
+  cancel-in-progress: false
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install polygon processor
+        run: python -m pip install "shapely>=2,<3"
+      - name: Recalculate all 300/500/1000m geographic catchments
+        run: python scripts/build_opportunities.py
+      - name: Validate generated statistics
+        run: node tests/opportunities.mjs
+      - name: Publish generated public-data artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/opportunities.json data/opportunities-audit.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: recalculate location catchments from INSEE and OSM"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
