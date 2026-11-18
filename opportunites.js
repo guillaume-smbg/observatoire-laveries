@@ -25,6 +25,11 @@
     const q=generic?'laverie automatique '+Number(p.lat).toFixed(6)+','+Number(p.lon).toFixed(6):p.name+' '+(p.address||'')+' France';
     return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
   }
+  function walkingDirections(origin,destination){
+    return 'https://www.google.com/maps/dir/?api=1&origin='+
+      encodeURIComponent(origin.lat+','+origin.lon)+'&destination='+
+      encodeURIComponent(destination.lat+','+destination.lon)+'&travelmode=walking';
+  }
   function csv(rows){
     return '\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n')+'\r\n';
   }
@@ -131,7 +136,7 @@
     $('compete-list').innerHTML='<p><strong>'+filtered.length+' points OSM</strong> à '+r+' m, selon le filtre choisi. Non vérifiés, certains peuvent être des pressings.</p>'
       +(filtered.length?'<div>'+filtered.slice(0,12).map(x=>
         '<p><a href="'+esc(googleLink(x))+'" target="_blank" rel="noopener noreferrer">'+esc(x.name||'Laverie sans nom')+'</a>'
-        +'<small> · '+Math.round(x.dist)+' m · '+esc(x.quality||'non classé')+'</small></p>').join('')+'</div>':'<p>Aucun point OSM renseigné dans ce rayon. Ne signifie pas absence réelle de concurrent.</p>');
+        +'<small> · '+Math.round(x.dist)+' m · '+esc(x.quality||'non classé')+' · <a href="'+esc(walkingDirections(p,x))+'" target="_blank" rel="noopener noreferrer">itinéraire à pied ↗</a></small></p>').join('')+'</div>':'<p>Aucun point OSM renseigné dans ce rayon. Ne signifie pas absence réelle de concurrent.</p>');
   }
   function select(id,pan=true){
     const p=iris.find(x=>x.id===id);if(!p)return;selected=p;
