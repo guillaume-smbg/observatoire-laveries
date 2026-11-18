@@ -71,3 +71,8 @@
 - Des tests locaux couvrent notamment « Rue Marie Stuart » et « Rue aux Ours » afin de vérifier que la normalisation conserve les noms complets de rues. Le seuil d'acceptation demeure 0,82, avec numéro et code postal strictement identiques et une précision BAN « housenumber ».
 - L'appel de rafraîchissement n'a pas abouti dans cet environnement : la connexion sortante au service IGN s'est fermée avant retour de résultats. Aucune donnée publiée n'a été remplacée et le snapshot reste à **44 adresses BAN strictes et 135 candidates sans position**. Il faut relancer le workflow lorsque l'API est joignable ; ne pas abaisser le seuil pour compenser.
 - Le compteur BAUG de Paris reste à 578 entrées annoncées pour 100 fiches accessibles sur la page publique indexée. Les 478 entrées manquantes n'ont pas été recréées depuis des fragments de moteur de recherche, qui ne constituent ni une liste complète ni une base d'import fiable.
+
+
+## Repères de prix publics
+
+Les premiers prix catalogue consultés pour le prévisionnel sont documentés dans [REPÈRES_PRIX_ÉQUIPEMENTS.md](REPÈRES_PRIX_ÉQUIPEMENTS.md). Ils restent des repères sourcés, non des devis ; ils ne remplacent pas les hypothèses modifiables du simulateur.
