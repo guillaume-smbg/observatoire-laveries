@@ -114,8 +114,9 @@ function paintAudit(){
  $('audit-body').innerHTML='<p><strong>Traitement du '+safe(String(doc.generated_at||'').slice(0,10))+'</strong> · '+fr(audit.pages_examined?.ouvert||0)
    +' pages Laverie Ouvert et '+fr(audit.pages_examined?.baug||0)+' pages BAUG interrogées.</p>'
    +'<p>'+fr(failures.length)+' pages non récupérées ou refusées. '+(failures.length?'La collecte reste incomplète pour les pages concernées.':'Pas d’échec déclaré par le collecteur.')+'</p>'
+   +'<p class="sub">BAUG : '+fr(audit.source_counts?.baug)+' fiches consultables sur '+fr(Object.values(audit.annuaire_claimed_by_department?.baug||{}).reduce((a,b)=>a+b,0))+' annoncées sur les pages départementales. La page Paris est limitée à 100 résultats : ce n’est pas un inventaire BAUG exhaustif.</p>'
    +'<div class="tablewrap"><table><thead><tr><th>Département</th><th>OSM</th><th>Laverie Ouvert</th><th>BAUG accessibles</th><th>Candidats distincts*</th><th>Géolocalisés</th></tr></thead><tbody>'
-   +['75','92','93','94'].map(d=>'<tr><td>'+d+'</td><td>'+fr(counts[d]?.osm)+'</td><td>'+fr(counts[d]?.ouvert)+'</td><td>'+fr(counts[d]?.baug)+'</td><td><b>'+fr(counts[d]?.distinct_candidates)+'</b></td><td>'+fr(counts[d]?.geolocated)+'</td></tr>').join('')
+   +['75','92','93','94'].map(d=>'<tr><td>'+d+'</td><td>'+fr(audit.source_entries_by_department?.osm?.[d]??counts[d]?.osm)+'</td><td>'+fr(audit.source_entries_by_department?.ouvert?.[d]??counts[d]?.ouvert)+'</td><td>'+fr(audit.source_entries_by_department?.baug?.[d]??counts[d]?.baug)+'</td><td><b>'+fr(counts[d]?.distinct_candidates)+'</b></td><td>'+fr(counts[d]?.geolocated)+'</td></tr>').join('')
    +'</tbody></table></div>'
    +'<p class="sub">* Candidats après rapprochement prudent, incluant des doublons possibles. Le nombre réel de laveries automatiques ouvertes reste inconnu. Certaines pages BAUG affichent une liste tronquée et peuvent ne pas avoir toutes été récupérées.</p>'
    +(failures.length?'<details><summary>Consulter les pages en échec</summary>'+failures.slice(0,30).map(x=>'<p class="sub">'+safe(x.page)+' : '+safe(x.reason)+'</p>').join('')+'</details>':'');
