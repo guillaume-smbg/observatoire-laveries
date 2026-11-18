@@ -1,0 +1,13 @@
+name: Inspect permitted directory listings
+on:
+  push:
+    paths: [scripts/probe_listing_structure.py]
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet beautifulsoup4 requests
+      - run: python scripts/probe_listing_structure.py
