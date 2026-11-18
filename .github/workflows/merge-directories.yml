@@ -11,7 +11,7 @@ permissions:
   contents: write
 concurrency:
   group: cross-directory-census
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   audit:
     runs-on: ubuntu-latest
