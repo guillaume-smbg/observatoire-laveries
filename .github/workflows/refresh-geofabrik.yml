@@ -12,7 +12,7 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: geofabrik-osm-inventory
+  group: pages
   cancel-in-progress: false
 jobs:
   refresh:
