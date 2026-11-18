@@ -34,3 +34,14 @@ for u,css in [
   for x in s.select(css)[:2]:
    print("ITEM_RAW",u,str(x)[:3200].replace("\n"," "),flush=True)
  except Exception as e: print("ITEM_ERROR",u,str(e)[:200],flush=True)
+
+for u in [
+ "https://baug.fr/ville/paris/",
+ "https://baug.fr/ville/paris/?page=2",
+ "https://baug.fr/ville/paris/?skip=100",
+ "https://baug.fr/departement/93/?page=2"]:
+ try:
+  t=bs4.BeautifulSoup(requests.get(u,timeout=30,headers={"User-Agent":"ObservatoireLaveriesResearch/1.0"}).text,"html.parser")
+  rows=t.select('article[data-company-id]')
+  print("PAGINATION_TEST",u,"ROWS",len(rows),"FIRST",rows[0].get('data-company-id') if rows else None,"LAST",rows[-1].get('data-company-id') if rows else None,flush=True)
+ except Exception as e:print('PAGINATION_ERR',u,str(e)[:200],flush=True)
