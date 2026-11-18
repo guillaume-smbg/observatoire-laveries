@@ -155,10 +155,19 @@
       'unclassified':'Catégorie non précisée'
     })[r.quality||'unclassified']||'Catégorie non précisée';
   }
+  function sirenePriorityName(r){
+    return !!r.commercial_name_present && /laverie|lavomatic|speed queen|wash|laundro|lavomat|lavorie/i.test(String(r.name||''));
+  }
+  function sireneGoogleUrl(r){
+    const query=r.commercial_name_present
+      ? String(r.name||'')+' '+String(r.postcode||'')+' France'
+      : 'laverie automatique '+String(r.postcode||'')+' France';
+    return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query);
+  }
   function renderSirene(){
     const dept=E('sirene-dept').value,scope=E('sirene-scope').value,query=E('sirene-search').value.toLocaleLowerCase('fr');
     sireneRows=(sirene||[]).filter(r=>(!dept||r.dep===dept)&&
-      (!scope||(scope==='mapped'?!!r.closest_osm_id:!r.closest_osm_id))&&
+      (!scope||(scope==='mapped'?!!r.closest_osm_id:scope==='unmapped_name'?(!r.closest_osm_id&&sirenePriorityName(r)):!r.closest_osm_id))&&
       (!query||[r.name,r.postcode,r.dep].some(x=>String(x||'').toLocaleLowerCase('fr').includes(query))));
     E('sirene-summary').textContent=sirene
       ?sireneRows.length.toLocaleString('fr-FR')+' établissements administratifs correspondants aux filtres, sur '+sirene.length.toLocaleString('fr-FR')+' candidats. Cela ne prouve pas la présence d’une laverie automatique.'
@@ -169,14 +178,15 @@
       +'<td>'+(r.closest_osm_id
         ?'<span title="Proximité géographique uniquement">'+escapeHtml(r.closest_osm_id)+' · '+escapeHtml(r.closest_osm_meters)+' m (non confirmé)</span>'
         :'Pas de point OSM rapproché dans la base')+'</td>'
-      +'<td><a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(r.registry_url)+'">Fiche SIRENE ↗</a></td></tr>').join('')
+      +'<td><a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(r.registry_url)+'">Registre SIRENE ↗</a>'+
+      '<small><a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(sireneGoogleUrl(r))+'">'+(r.commercial_name_present?'Rechercher le nom sur Google Maps ↗':'Rechercher des laveries du secteur ↗')+'</a></small></td></tr>').join('')
       ||'<tr><td colspan="4">Aucun candidat SIRENE correspondant ou donnée absente.</td></tr>';
   }
   E('sirene-export').onclick=()=>{
     if(!sirene)return;
     download('candidats-sirene-9601B-non-verifies.csv',csv([
       ['siret','nom_commercial_ou_libelle_generique','code_postal','departement','latitude','longitude','naf','etat_administratif','osm_proche_id','distance_osm_m','registre','limite'],
-      ...sireneRows.map(r=>[r.id,r.name,r.postcode,r.dep,r.lat,r.lon,r.activity,r.administrative_status,r.closest_osm_id||'',r.closest_osm_meters??'',r.registry_url,'Immatriculation ≠ commerce ouvert ni libre-service'])
+      ...sireneRows.map(r=>[r.id,r.name,r.postcode,r.dep,r.lat,r.lon,r.activity,r.administrative_status,r.closest_osm_id||'',r.closest_osm_meters??'',r.registry_url,(sirenePriorityName(r)?'Nom évocateur (non vérifié) ; ':'')+'Immatriculation ≠ commerce ouvert ni libre-service'])
     ]));
   };
   ['sirene-dept','sirene-scope','sirene-search'].forEach(id=>E(id).addEventListener('input',renderSirene));
