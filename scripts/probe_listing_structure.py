@@ -25,3 +25,12 @@ for u in urls:
  except Exception as e:print('ERROR',str(e))
 
 # This probe reads only robots-permitted listing pages.
+
+for u,css in [
+ ("https://baug.fr/ville/boulogne-billancourt/","article"),
+ ("https://laverie.ouvert.tel/75/paris-7e/","div.it")]:
+ try:
+  s=bs4.BeautifulSoup(requests.get(u,timeout=25,headers={"User-Agent":"ObservatoireLaveriesResearch/1.0"}).text,"html.parser")
+  for x in s.select(css)[:2]:
+   print("ITEM_RAW",u,str(x)[:3200].replace("\n"," "),flush=True)
+ except Exception as e: print("ITEM_ERROR",u,str(e)[:200],flush=True)
