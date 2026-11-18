@@ -9,6 +9,8 @@ on:
       - Refresh official SIRENE candidates
       - Refresh official INSEE IRIS statistics
       - Generate opportunity areas
+      - Geocode missing directory addresses
+      - Cross-check public laundry directories
     types: [completed]
 permissions:
   contents: read
