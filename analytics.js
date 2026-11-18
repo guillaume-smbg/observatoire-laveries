@@ -23,7 +23,12 @@
   const weight = id => Number(E(id).value)||0;
   function competition(pt) {
     if(!osm)return null;
-    const match=osm; // Cross-department competitors must count near boundaries.
+    const scenario=E('rank-osm-evidence').value;
+    const match=osm.filter(p=>{
+      if(scenario==='explicit')return p.quality==='self_service_tagged';
+      if(scenario==='probable')return p.quality==='self_service_tagged'||p.quality==='possibly_automatic';
+      return true;
+    }); // Keep competitor distances across departmental boundaries.
     const dist=match.map(p=>km(pt,p));
     return {c300:dist.filter(d=>d<=.3).length,c500:dist.filter(d=>d<=.5).length,c1000:dist.filter(d=>d<=1).length};
   }
@@ -111,7 +116,7 @@
     const scores=visible.filter(r=>r.score!==null).length;
     E('rank-summary').textContent=iris.length
       ? nfr(visible.length)+' IRIS correspondant aux filtres · '+nfr(scores)+' indices calculables. '
-      +'Indice exploratoire, PAS une prévision de CA. Les points OSM ne sont pas des concurrents vérifiés.'
+      +'Indice exploratoire, PAS une prévision de CA. Hypothèse de concurrence : '+E('rank-osm-evidence').selectedOptions[0].textContent+'. Aucune catégorie OSM ne garantit la présence d’une laverie active.'
       : 'Données INSEE IRIS absentes : aucun classement publié.';
     const top=visible.slice(0,100);
     E('rank-body').innerHTML=top.map((r,i)=>
@@ -240,13 +245,13 @@
   E('rank-export').onclick=()=>{
     const rows=visible.map(r=>[r.id,r.commune,r.name,r.dep,r.lat,r.lon,r.population,r.homes,
       r.small_pct,r.renters_pct,r.c300??'',r.c500??'',r.c1000??'',r.score??'',meta?.generated_at||'',
-      'INSEE RP 2022 / contours 2024; OSM non vérifié; indice exploratoire']);
+      'INSEE RP 2022 / contours 2024; OSM non vérifié; filtre '+E('rank-osm-evidence').value+'; indice exploratoire']);
     download('observatoire-iris-classement-exploratoire.csv',csv([
       ['iris','commune','name','dept','lat','lon','population_2022','residences_principales_2022',
       'moins_40m2_pct','locataires_pct','osm_300m','osm_500m','osm_1000m','indice_exploratoire','date_osm','limites'],...rows
     ]));
   };
-  ['rank-dep','rank-search','rank-sort','rank-radius','rank-show-markers','w-households','w-small','w-renters','w-competition']
+  ['rank-dep','rank-search','rank-sort','rank-radius','rank-osm-evidence','rank-show-markers','w-households','w-small','w-renters','w-competition']
     .forEach(id=>E(id).addEventListener('input',display));
   ['osm-search','osm-dept','osm-status','osm-quality','osm-sirene'].forEach(id=>E(id).addEventListener('input',inventory));
   map.on('click',()=>{
