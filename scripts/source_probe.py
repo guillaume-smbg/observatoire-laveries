@@ -42,3 +42,5 @@ for name,url in sources:
   print('COUNTS',name,re.findall(r'.{0,35}(?:laveries automatiques|laveries|résultats|établissements).{0,70}',re.sub(r'<[^>]+>',' ',page),flags=re.I)[:5],flush=True)
   print('JSONLD',name,bool(re.search(r'application/ld\\+json',page,re.I)),'PAGINATION',any('page=' in x or '/page/' in x for x in internal),flush=True)
  except Exception as e:print('PAGE_ERROR',name,str(e)[:300],flush=True)
+
+# Source feasibility pass: 2026-11-18.
