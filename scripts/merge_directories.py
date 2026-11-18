@@ -115,9 +115,9 @@ def download(url):
 def baug_from_page(url,dept):
     doc=download(url)
     if not doc:return [],[]
-    if re.fullmatch(r"https://baug\\.fr/departement/(75|92|93|94)/",url):
+    if re.fullmatch(r"https://baug\.fr/departement/(75|92|93|94)/",url):
         title=doc.title.get_text(' ',strip=True) if doc.title else ''
-        m=re.search(r"\\((\\d+)\\s+laveries",title,re.I)
+        m=re.search(r"\((\d+)\s+laveries",title,re.I)
         if m:DECLARED_COUNTS['baug'][dept]=int(m.group(1))
     articles=doc.select("article[data-company-id]")
     entries=[]
@@ -148,9 +148,9 @@ def baug_from_page(url,dept):
 def ouvert_from_page(url,dept):
     doc=download(url)
     if not doc:return [],[]
-    if re.fullmatch(r"https://laverie\\.ouvert\\.tel/(75|92|93|94)/",url):
+    if re.fullmatch(r"https://laverie\.ouvert\.tel/(75|92|93|94)/",url):
         intro=doc.get_text(" ",strip=True)[:4000]
-        m=re.search(r"(\\d+)\\s+laveries",intro,re.I)
+        m=re.search(r"(\d+)\s+laveries",intro,re.I)
         if m:DECLARED_COUNTS['ouvert'][dept]=int(m.group(1))
     entries=[]
     for card in doc.select("div.it[data-eid]"):
@@ -386,7 +386,8 @@ def main():
            "coverage":coverage,"match_stats":dict(stats),"composition":dict(src_totals),
            "total_candidates":len(candidates),"located_candidates":out["located_candidates"],
            "annuaire_claimed_by_department":DECLARED_COUNTS,
-           "directory_coverage_difference":{src:{d:DECLARED_COUNTS[src].get(d,0)-counts_by_source[src].get(d,0) for d in DEPTS} for src in DECLARED_COUNTS},
+           "source_entries_by_department":{"osm":dict(collections.Counter(r['dep'] for r in osm)),"ouvert":counts_by_source['ouvert'],"baug":counts_by_source['baug']},
+           "directory_coverage_difference":{src:{d:DECLARED_COUNTS[src].get(d)-counts_by_source[src].get(d,0) if d in DECLARED_COUNTS[src] else None for d in DEPTS} for src in DECLARED_COUNTS},
            "failed_pages":FAILED,"pages_examined":{k:len(v) for k,v in fetched.items()},
            "caveat":"Derived distinct candidate records are NOT verified distinct active self-service laundries. Matching and coordinate clues must be checked."}
     (DATA/"annuaire-croise.json").write_text(json.dumps(out,ensure_ascii=False,separators=(",",":"),allow_nan=False)+"\n",encoding="utf-8")
