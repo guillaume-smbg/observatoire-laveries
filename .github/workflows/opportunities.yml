@@ -7,6 +7,11 @@ on:
     paths:
       - scripts/build_opportunities.py
       - .github/workflows/opportunities.yml
+  workflow_run:
+    workflows:
+      - Geocode missing directory addresses
+      - Cross-check public laundry directories
+    types: [completed]
 permissions:
   contents: write
 concurrency:
@@ -14,10 +19,13 @@ concurrency:
   cancel-in-progress: false
 jobs:
   generate:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 16
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
