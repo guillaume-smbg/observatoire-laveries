@@ -17,6 +17,13 @@ try {
   assert.notEqual(initial,modified,'Financial simulator must update investment amount');
   await page.locator('#rank-dep').selectOption('92');
   assert.ok(await page.locator('#rank-summary').count(),'Ranking controls must render');
+  assert.ok(await page.locator('#sirene-census').count(),'SIRENE registry comparison must be visible');
+  await page.locator('#sirene-dept').selectOption('75');
+  await page.locator('#sirene-scope').selectOption('unmapped');
+  assert.ok(await page.locator('#sirene-summary').count(),'Administrative candidates must render clear status');
+  await page.locator('#osm-quality').selectOption('self_service_tagged');
+  assert.ok(await page.locator('#osm-inventory-summary').count(),'OSM evidence filtering must update');
+  await page.locator('#osm-quality').selectOption('');
   await page.waitForSelector('#osm-inventory-body a.google-check', {timeout:15000});
   const googleLink=await page.locator('#osm-inventory-body a.google-check').first().getAttribute('href');
   assert.ok(googleLink.startsWith('https://www.google.com/maps/search/?api=1&query='),'Google verification search must link to Maps');
@@ -24,7 +31,7 @@ try {
   assert.equal(await page.locator('[data-review]').first().inputValue(),'google_seen','Google corroboration must remain separate from field verification');
   assert.equal(errors.length,0,'Page JS runtime errors: '+errors.join(' | '));
   await page.screenshot({path:'/tmp/observatoire-smoke.png',fullPage:true});
-  console.log('PASS: Leaflet initialized, financial inputs react, ranking renders, Google search links and review states work, no JS runtime exceptions.');
+  console.log('PASS: Leaflet initialized, financial inputs react, ranking, SIRENE and OSM evidence filters, Google search links and review states work, no JS runtime exceptions.');
 } finally {
   await browser.close();
 }
