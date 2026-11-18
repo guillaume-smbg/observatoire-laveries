@@ -15,4 +15,5 @@ jobs:
         with:
           node-version: "22"
       - run: node tests/smoke.mjs
-      - run: python3 -m py_compile scripts/refresh_data.py
+      - run: node tests/data-integrity.mjs
+      - run: python3 -m py_compile scripts/refresh_data.py scripts/refresh_geofabrik.py scripts/refresh_sirene.py
