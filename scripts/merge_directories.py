@@ -33,6 +33,7 @@ SESSION=requests.Session()
 ROBOTS={}
 SOURCE_STAT={}
 FAILED=[]
+DECLARED_COUNTS={'baug':{},'ouvert':{}}
 PAGE_DELAY=0.48
 LAST_REQUEST={}
 MAX_PAGES=260
@@ -114,6 +115,10 @@ def download(url):
 def baug_from_page(url,dept):
     doc=download(url)
     if not doc:return [],[]
+    if re.fullmatch(r"https://baug\\.fr/departement/(75|92|93|94)/",url):
+        title=doc.title.get_text(' ',strip=True) if doc.title else ''
+        m=re.search(r"\\((\\d+)\\s+laveries",title,re.I)
+        if m:DECLARED_COUNTS['baug'][dept]=int(m.group(1))
     articles=doc.select("article[data-company-id]")
     entries=[]
     for card in articles:
@@ -143,6 +148,10 @@ def baug_from_page(url,dept):
 def ouvert_from_page(url,dept):
     doc=download(url)
     if not doc:return [],[]
+    if re.fullmatch(r"https://laverie\\.ouvert\\.tel/(75|92|93|94)/",url):
+        intro=doc.get_text(" ",strip=True)[:4000]
+        m=re.search(r"(\\d+)\\s+laveries",intro,re.I)
+        if m:DECLARED_COUNTS['ouvert'][dept]=int(m.group(1))
     entries=[]
     for card in doc.select("div.it[data-eid]"):
         ident=str(card.get("data-eid") or "")
@@ -376,6 +385,8 @@ def main():
     audit={"generated_at":now,"source_counts":{"osm":len(osm),"ouvert":len(opened),"baug":len(baug)},
            "coverage":coverage,"match_stats":dict(stats),"composition":dict(src_totals),
            "total_candidates":len(candidates),"located_candidates":out["located_candidates"],
+           "annuaire_claimed_by_department":DECLARED_COUNTS,
+           "directory_coverage_difference":{src:{d:DECLARED_COUNTS[src].get(d,0)-counts_by_source[src].get(d,0) for d in DEPTS} for src in DECLARED_COUNTS},
            "failed_pages":FAILED,"pages_examined":{k:len(v) for k,v in fetched.items()},
            "caveat":"Derived distinct candidate records are NOT verified distinct active self-service laundries. Matching and coordinate clues must be checked."}
     (DATA/"annuaire-croise.json").write_text(json.dumps(out,ensure_ascii=False,separators=(",",":"),allow_nan=False)+"\n",encoding="utf-8")
