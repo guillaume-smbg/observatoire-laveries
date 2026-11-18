@@ -1,6 +1,6 @@
 # Observatoire des laveries
 
-[**Ouvrir la carte publique**](https://guillaume-smbg.github.io/observatoire-laveries/) · [Méthodologie](docs/METHODOLOGIE.md)
+[**Ouvrir la carte publique**](https://guillaume-smbg.github.io/observatoire-laveries/) · [**Comparer les quartiers / opportunités**](https://guillaume-smbg.github.io/observatoire-laveries/opportunites.html) · [Méthodologie](docs/METHODOLOGIE.md)
 
 Application publique **100 % gratuite**, indépendante de SMBG, hébergée dans son propre dépôt GitHub Pages, sans Cloudflare.
 
@@ -11,6 +11,8 @@ Application publique **100 % gratuite**, indépendante de SMBG, hébergée dans 
 - **Deuxième source officielle SIRENE** : balayage paginé des établissements actifs et diffusibles sous le code 96.01B, rapprochements géographiques avec OSM à 45 m (indice seulement) et liste de candidats à examiner.
 - **INSEE RP 2022 / géographie IRIS 2024** : habitants, résidences principales, proportions de petits logements et de locataires ; carte thématique et classement exploratoire pondéré.
 - Contrôles locaux manuels (Google Maps, contrôle terrain, exclusions), enregistrés uniquement dans le navigateur et exportables.
+- **Page distincte Opportunités** : estimation des habitants, logements et concurrence à 300 / 500 / 1 000 m par intersection surfacique des IRIS ; 50 secteurs espacés et filtrables, carte, fiche détaillée et concurrence locale. Les estimations reposent sur une hypothèse de distribution uniforme dans chaque IRIS et ne sont pas des comptages piétons.
+- **Comparaison de six zones** : sélection sauvegardée localement, loyer et fréquentation modifiables par zone, prévisionnels prudent/central/dynamique (65/100/135 %), export CSV et fiche imprimable / enregistrable en PDF depuis le navigateur.
 - Simulateur d'investissement et de trésorerie à trois scénarios, comparaisons des travaux et de l'équipement, financement, analyses de sensibilité.
 - Tests automatisés JavaScript, navigateur Chromium et GitHub Actions.
 
@@ -38,6 +40,7 @@ Application publique **100 % gratuite**, indépendante de SMBG, hébergée dans 
 - `.github/workflows/refresh-geofabrik.yml` : extraction OSM hebdomadaire depuis un nouvel extrait PBF, source, audit de doublons et variations.
 - `.github/workflows/refresh-sirene.yml` : nouvelle recherche SIRENE, contrôle de diffusion, recoupement spatial et rapport de couverture.
 - `.github/workflows/refresh-data.yml` : statistiques officielles INSEE IRIS.
+- `.github/workflows/opportunities.yml` : recalcul reproductible hebdomadaire des cercles démographiques et des 50 zones IRIS à explorer, depuis les données à jour.
 - `.github/workflows/pages.yml` : hébergement GitHub Pages et déploiement automatiquement déclenché par les nouveaux commits.
 - `.github/workflows/check.yml`, `.github/workflows/browser.yml` : qualité de code et navigation.
 
@@ -45,6 +48,6 @@ Toutes les sources sont datées et référencées. Les fichiers défaillants ne 
 
 ## Limites restantes
 
-Un inventaire **exhaustif et confirmé** nécessite des recherches Google manuelles, des appels aux exploitants ou des visites, en particulier pour les 85 pistes SIRENE à nom évocateur absentes d'OSM. Les indices IRIS utilisent des points représentatifs et des distances à vol d'oiseau, pas des parcours piétons. La simulation n'inclut pas de devis vérifiés, de modèle de CA calibré ou de fiscalité exhaustive. Les vérifications locales du navigateur ne sont pas une base partagée.
+Un inventaire **exhaustif et confirmé** nécessite des recherches Google manuelles, des appels aux exploitants ou des visites, en particulier pour les 85 pistes SIRENE à nom évocateur absentes d'OSM. Les indices IRIS utilisent des points représentatifs et des distances à vol d'oiseau, pas des parcours piétons. La simulation n'inclut pas de devis vérifiés, de modèle de CA calibré ou de fiscalité exhaustive. Les vérifications locales du navigateur ne sont pas une base partagée. Les zones étudiées sont des points représentatifs d'IRIS, pas des locaux disponibles ; les chiffres dans les cercles sont des estimations surfaciques et non des données d'adresse. Les isochrones piétons et le recensement terrain exhaustif ne sont pas réalisés.
 
 Sources : © contributeurs OpenStreetMap (ODbL), INSEE recensement et SIRENE, contours IRIS IGN/Insee via Région Île-de-France, API Géo. Voir la [documentation méthodologique](docs/METHODOLOGIE.md).
