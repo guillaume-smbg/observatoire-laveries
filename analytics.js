@@ -5,7 +5,7 @@
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const nfr = value => Number(value).toLocaleString('fr-FR',{maximumFractionDigits:0});
   const pct = value => value == null || !Number.isFinite(Number(value)) ? 'ND' : Number(value).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %';
-  let iris=[], osm=null, meta=null, markers=null, reviewed={};
+  let iris=[], osm=null, meta=null, markers=null, contours=null, cachedScores=new Map(), reviewed={};
   try { reviewed=JSON.parse(localStorage.getItem('observatoire-laveries-reviews-v1') || '{}') } catch(_){}
   const km = (a,b) => {
     const r=Math.PI/180, dy=(a.lat-b.lat)*r, dx=(a.lon-b.lon)*r;
@@ -45,10 +45,61 @@
       return {...row,...c,score:score===null?null:Math.round(score*10)/10};
     });
   }
+  function styleContour(feature){
+    const r=cachedScores.get(feature.properties?.id), metric=E('rank-heat-metric').value, dep=E('rank-dep').value;
+    const val=r?(metric==='score'?r.score:r[metric]):null;
+    if(!r||val===null||val===undefined||!Number.isFinite(val)||(dep&&r.dep!==dep))
+      return {color:'#7c8794',weight:.35,fillOpacity:0};
+    const t=Math.max(0,Math.min(1,metric==='population'?val/4500:val/100));
+    const palette=['#fff3cc','#fdd67a','#fbac4e','#ee7538','#d5472e','#9c292a'];
+    return {color:'#6b5a57',weight:.35,fillColor:palette[Math.min(5,Math.floor(t*6))],fillOpacity:.42};
+  }
+  function redrawContours(){
+    if(!contours)return;
+    contours.setStyle(styleContour);
+  }
+  async function toggleContours(){
+    if(!E('rank-show-contours').checked){if(contours)map.removeLayer(contours);return}
+    if(!contours){
+      E('rank-contour-info').textContent='Téléchargement des contours IRIS…';
+      try{
+        const geo=await json('./data/iris-2022-contours.geojson');
+        if(geo.type!=='FeatureCollection'||!Array.isArray(geo.features)||geo.features.length<200)
+          throw Error('Fichier de géométries absent ou incomplet');
+        contours=L.geoJSON(geo,{
+          style:styleContour,
+          onEachFeature:(feature,layer)=>{
+            const id=String(feature.properties?.id||'');
+            layer.bindTooltip('IRIS '+escapeHtml(id));
+            layer.on('click',evt=>{
+              L.DomEvent.stopPropagation(evt);
+              const r=iris.find(x=>x.id===id);if(!r)return;
+              E('iris-focus').innerHTML='<strong>'+escapeHtml(r.commune||'')+' — '+escapeHtml(r.name||id)+'</strong>'
+                +'<p>IRIS '+escapeHtml(id)+' : '+nfr(r.population)+' habitants (INSEE 2022), '+pct(r.small_pct)
+                +' de résidences principales de moins de 40 m², '+pct(r.renters_pct)+' de locataires.</p>'
+                +'<p>Zone IRIS officielle simplifiée en 2024 : les géométries sont distinctes des établissements OSM.</p>';
+              map.panTo(evt.latlng);
+            });
+          }
+        });
+        E('rank-contour-info').textContent=geo.features.length+' contours IRIS simplifiés (source IGN/Insee, géographie 2024).';
+      }catch(error){
+        E('rank-show-contours').checked=false;
+        E('rank-contour-info').textContent='Contours indisponibles : '+error.message+'. L’analyse tabulaire reste accessible.';
+        return;
+      }
+    }
+    contours.addTo(map);
+    redrawContours();
+  }
+  E('rank-show-contours').onchange=toggleContours;
+  E('rank-heat-metric').onchange=redrawContours;
   let visible=[];
   function display() {
     const dep=E('rank-dep').value,query=E('rank-search').value.toLocaleLowerCase('fr'),sort=E('rank-sort').value;
     const all=enriched();
+    cachedScores=new Map(all.map(r=>[r.id,r]));
+    redrawContours();
     visible=all.filter(r=> (!dep||r.dep===dep) && (!query||[r.name,r.commune,r.id].some(x=>String(x||'').toLocaleLowerCase('fr').includes(query))) && (r.population||0)>0);
     visible.sort((a,b)=>{
       if(sort==='population')return (b.population||0)-(a.population||0);
