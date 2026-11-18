@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-18T11:29:15.861529+00:00",
+  "generated_at": "2026-11-18T11:34:41.051779+00:00",
   "source_counts": {
     "osm": 929,
     "ouvert": 1162,
@@ -70,6 +70,26 @@
       "94": 204
     }
   },
+  "source_entries_by_department": {
+    "osm": {
+      "93": 121,
+      "75": 526,
+      "94": 121,
+      "92": 161
+    },
+    "ouvert": {
+      "75": 563,
+      "92": 171,
+      "93": 224,
+      "94": 204
+    },
+    "baug": {
+      "75": 100,
+      "92": 189,
+      "93": 244,
+      "94": 222
+    }
+  },
   "directory_coverage_difference": {
     "baug": {
       "75": 478,
@@ -98,27 +118,5 @@
     "baug": 115,
     "ouvert": 135
   },
-  "caveat": "Derived distinct candidate records are NOT verified distinct active self-service laundries. Matching and coordinate clues must be checked.",
-  "source_entries_by_department": {
-    "osm": {
-      "75": 526,
-      "92": 161,
-      "93": 121,
-      "94": 121
-    },
-    "ouvert": {
-      "75": 563,
-      "92": 171,
-      "93": 224,
-      "94": 204
-    },
-    "baug": {
-      "75": 100,
-      "92": 189,
-      "93": 244,
-      "94": 222
-    }
-  },
-  "methodology_note": "Annuaire published department totals (BAUG 1241, Ouvert 1162) are NOT verified distinct open businesses; BAUG Paris caps its public listing at 100 of 578 records. Coverage column in the per-candidate table counts linked canonical records, not all raw source listings. Raw source entries are recorded separately.",
-  "advertised_count_checked_date": "2026-11-18"
+  "caveat": "Derived distinct candidate records are NOT verified distinct active self-service laundries. Matching and coordinate clues must be checked."
 }
