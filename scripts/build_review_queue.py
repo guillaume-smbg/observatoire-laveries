@@ -87,7 +87,7 @@ def main():
         "directory_generated_at":items.get("generated_at"),
         "rows":[{"id":x["id"],"priority":x["priorite"],"points":x["points_priorite"],
                  "reasons":x["motifs"]} for x in out]
-    },ensure_ascii=False,separators=(",",":"))+"\\n",encoding="utf-8")
+    },ensure_ascii=False,separators=(",",":"))+"\n",encoding="utf-8")
     counts={}
     for tier in ("A — à vérifier en priorité","B — à vérifier","C — contrôle standard"):
         counts[tier]=sum(x["priorite"]==tier for x in out)
