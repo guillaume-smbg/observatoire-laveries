@@ -16,3 +16,5 @@ for dept in ['75','92']:
     except Exception as e:
         print('ERROR',dept,str(e)[:450],flush=True)
     time.sleep(.5)
+
+# Diagnostic API for source qualification.
