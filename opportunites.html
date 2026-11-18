@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Comparer des quartiers de Paris et petite couronne pour un projet de laverie. Données INSEE et OSM avec sources, limites et simulations explicites.">
+<title>Opportunités d'implantation · Observatoire des laveries</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{color-scheme:light;--ink:#173147;--muted:#526777;--paper:#fff;--bg:#f3f6fa;--accent:#1263a0;--border:#dce5ed}
+*{box-sizing:border-box}body{font:14px/1.52 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+header{padding:15px max(18px,calc((100vw - 1440px)/2));background:#13334d;color:white}
+header a{color:#d6ebfa}header h1{font-size:23px;line-height:1.2;margin:6px 0}.subtitle{color:#cadce9}
+.toplinks{display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-weight:600}
+main{max-width:1440px;margin:auto;padding:16px;display:grid;gap:16px}
+.panel{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:18px;min-width:0;box-shadow:0 3px 14px rgba(31,50,70,.035)}
+h2{font-size:19px;margin:0 0 12px}h3{font-size:16px;margin:8px 0}p{margin:8px 0 12px}.muted{color:var(--muted);font-size:12px}.warning{font-size:13px;border-left:3px solid #d8a13c;padding-left:10px}
+label{display:block;font-size:13px;font-weight:600}label small{font-weight:400;color:var(--muted)}
+input,select,button{font:inherit}input:not([type=checkbox]),select{width:100%;min-width:0;padding:8px 10px;margin:4px 0 9px;background:white;border:1px solid #aabcc9;border-radius:7px}
+button,.buttonlike{background:var(--accent);color:white;border:0;border-radius:7px;padding:8px 12px;cursor:pointer;display:inline-block;text-decoration:none;line-height:1.3}
+button:hover{background:#104974}button:focus-visible,a:focus-visible{outline:3px solid #ee9c35;outline-offset:2px}
+button.secondary{background:#edf4f9;border:1px solid #b6cbdc;color:var(--ink)}button.tiny{font-size:12px;padding:5px 8px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}.bar>*{max-width:100%}.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.layout{display:grid;grid-template-columns:minmax(260px,310px) minmax(0,1fr);gap:16px}
+#map{height:570px;border-radius:10px;z-index:0}.layout aside .panel{margin-bottom:12px}.table-wrap{overflow:auto;max-height:535px}
+table{border-collapse:collapse;width:100%;min-width:690px}thead th{position:sticky;top:0;background:#eaf1f5;z-index:1}td,th{border-bottom:1px solid #e2e8ed;padding:9px;text-align:left;vertical-align:top}tr:hover td{background:#f7fafc}td small{display:block;color:var(--muted)}td button{white-space:nowrap}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.kpi{border:1px solid var(--border);border-radius:8px;padding:12px}.kpi strong{display:block;font-size:20px}.kpi small{color:var(--muted)}
+#place-detail{min-height:140px}.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.detail-grid div{border:1px solid var(--border);border-radius:8px;padding:9px}
+.detail-grid strong{display:block}
+a{color:#145c91}a:hover{text-decoration:underline}
+footer{max-width:1440px;margin:14px auto 28px;padding:0 16px;color:var(--muted);font-size:12px}
+#compete-list{max-height:250px;overflow:auto}.actionline{display:flex;flex-wrap:wrap;gap:9px}
+.hide-print{}.highlight{color:#0a6354}.dim{color:var(--muted)}.smallvalue{font-variant-numeric:tabular-nums}
+@media(max-width:1100px){.layout{grid-template-columns:1fr}.controls{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){main{padding:8px}.panel{padding:12px}.controls{grid-template-columns:1fr}#map{height:400px}.detail-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
+@media print{body{background:white;font-size:11px}header{background:white;color:#173147;padding:8px}header .toplinks,footer .hide-print,.hide-print,#map,#map-panel,#table-panel,.controls{display:none!important}.layout{display:block}main{padding:0;display:block}.panel{break-inside:avoid;border:0;box-shadow:none;padding:7px}.table-wrap{max-height:none;overflow:visible}table{min-width:0}td,th{padding:5px;white-space:normal}button{display:none!important}h2{font-size:17px}.kpis{grid-template-columns:repeat(4,1fr)}#place-detail{min-height:0}#comparison-panel{display:block!important}}
+</style>
+</head>
+<body>
+<header>
+<nav class="toplinks"><a href="./">← Observatoire principal</a><a href="#ranked">Classement</a><a href="#comparison-panel">Comparaison</a><a href="#method">Méthodologie</a></nav>
+<h1>Opportunités d'implantation</h1><div class="subtitle">Paris et petite couronne · exploration des zones IRIS et comparaison économique</div>
+</header>
+<main>
+<section class="panel">
+<p class="warning"><strong>Étude exploratoire, pas un diagnostic commercial certifié.</strong> Les habitants et logements dans les rayons sont <strong>estimés en répartissant uniformément les données au sein de chaque IRIS</strong>. Les distances sont à vol d'oiseau et les établissements OSM ne sont pas vérifiés. Les points proposés sont des lieux représentatifs d'un quartier, <strong>pas des locaux disponibles</strong>.</p>
+<p id="loading" role="status">Chargement des statistiques publiques…</p>
+<div class="kpis"><div class="kpi"><small>Zones IRIS analysées</small><strong id="k-iris">—</strong></div><div class="kpi"><small>Zones analysables</small><strong id="k-scores">—</strong></div><div class="kpi"><small>Points OSM (non vérifiés)</small><strong id="k-osm">—</strong></div><div class="kpi"><small>Emplacements sauvegardés</small><strong id="k-saved">0</strong></div></div>
+</section>
+<section class="panel hide-print" id="filters-panel">
+<h2>Filtrer et classer les opportunités</h2>
+<div class="controls">
+<label>Département<select id="dept"><option value="">75, 92, 93, 94</option><option value="75">Paris (75)</option><option value="92">Hauts-de-Seine (92)</option><option value="93">Seine-Saint-Denis (93)</option><option value="94">Val-de-Marne (94)</option></select></label>
+<label>Commune / quartier<input id="search" placeholder="Ex. Paris 7e, Montrouge"></label>
+<label>Rayon géométrique<select id="radius"><option value="300">300 m</option><option value="500" selected>500 m</option><option value="1000">1 000 m</option></select></label>
+<label>Concurrence OSM incluse<select id="evidence"><option value="all">Tous points OSM (prudent)</option><option value="plausible" selected>Libre-service + nom de laverie</option><option value="explicit">Libre-service renseigné seulement</option></select></label>
+<label>Part minimale de petits logements<select id="small-share"><option value="0">Aucun seuil</option><option value="30">30 %</option><option value="40">40 %</option><option value="50">50 %</option><option value="60">60 %</option></select></label>
+<label>Couverture géographique minimale<select id="coverage"><option value="0.8" selected>80 % (recommandé)</option><option value="0.9">90 %</option><option value="0.98">98 %</option></select></label>
+<label>Classement<select id="sort"><option value="score">Indice exploratoire</option><option value="housing">Résidences principales</option><option value="small">Petits logements (%)</option><option value="renters">Locataires (%)</option><option value="few">Peu de points OSM</option></select></label>
+<label>Réduire les zones voisines<select id="dedupe"><option value="650" selected>Zones espacées de 650 m</option><option value="0">Toutes les zones IRIS</option><option value="1000">Zones espacées de 1 km</option></select></label>
+</div>
+<div class="bar"><button id="download-csv">Exporter le classement CSV</button><button class="secondary" id="show-competitors">Afficher/masquer les laveries OSM</button><button class="secondary" id="reset-filters">Réinitialiser les filtres</button></div>
+<p id="rank-note" class="muted" role="status"></p>
+</section>
+<div class="layout">
+<aside>
+<section class="panel" id="detail-panel">
+<h2>Fiche de zone</h2>
+<div id="place-detail">Sélectionnez une zone sur la carte ou dans le classement.</div>
+<div class="actionline hide-print"><button id="save-place" disabled>Ajouter à comparer</button><button class="secondary" id="print-report">Imprimer / enregistrer en PDF</button></div>
+</section>
+<section class="panel">
+<h3>Concurrence autour de la zone</h3><div id="compete-list" class="muted">Choisissez une zone.</div>
+</section>
+<section class="panel hide-print">
+<h3>Paramètres du classement</h3>
+<p class="muted">L'indice est un mélange de densité résidentielle, de petits logements, de locataires et de points OSM. Il ne prédit pas le chiffre d'affaires. La méthode et les données manquantes sont consultables dans le rapport.</p>
+<a href="./docs/METHODOLOGIE.md" target="_blank" rel="noopener noreferrer">Méthodologie et limites complètes</a>
+</section>
+</aside>
+<div>
+<section class="panel" id="map-panel">
+<h2>Carte des zones étudiées</h2>
+<div id="map" aria-label="Carte interactive des quartiers IRIS"></div>
+<p class="muted">Les couleurs indiquent un indice expérimental. Cliquer sur un point IRIS ne sélectionne pas un commerce disponible. La carte des laveries utilise des points OSM non vérifiés.</p>
+</section>
+<section class="panel" id="table-panel" style="margin-top:16px">
+<h2 id="ranked">Classement des zones à explorer</h2>
+<p class="muted" id="list-subtitle">Calcul du classement…</p>
+<div class="table-wrap"><table><thead><tr><th>Zone IRIS</th><th>Indice*</th><th>Habitants estimés</th><th>Petits logements</th><th>Locataires</th><th>OSM proches</th><th>Action</th></tr></thead><tbody id="top-rows"></tbody></table></div>
+<p class="muted">* Classement indicatif fondé sur des hypothèses, pas sur des ouvertures réussies ou un CA observé. Les 50 premières zones distinctes sont proposées par défaut.</p>
+</section>
+</div>
+</div>
+<section class="panel" id="comparison-panel">
+<h2>Comparer mes zones et simuler leur exploitation</h2>
+<p class="muted">Sélectionnez jusqu'à 6 zones. Les estimations de population restent distinctes des hypothèses de cycles de lavage. <strong>Le CA n'est pas déduit automatiquement du score :</strong> entrez votre propre fréquentation et le loyer envisagé. Les réglages sont enregistrés localement dans ce navigateur.</p>
+<div class="controls hide-print">
+<label>Prix moyen par lavage HT (€)<input id="price" type="number" min="0" step=".1" value="7"></label>
+<label>Coûts variables par lavage HT (€)<input id="variable" type="number" min="0" step=".1" value="1.6"></label>
+<label>Charges fixes mensuelles hors loyer (€)<input id="fixed" type="number" min="0" value="1100"></label>
+<label>Marge des services complémentaires / mois (€)<input id="services" type="number" min="0" value="180"></label>
+<label>Investissement initial estimé (€)<input id="investment" type="number" min="0" value="150000"></label>
+<label>Financement bancaire (%)<input id="debt" type="number" min="0" max="100" value="70"></label>
+<label>Taux annuel du crédit (%)<input id="interest" type="number" min="0" max="100" step=".1" value="5"></label>
+<label>Durée du crédit (années)<input id="years" type="number" min="1" max="25" value="7"></label>
+</div>
+<div class="table-wrap"><table><thead><tr><th>Zone et niveau de concurrence</th><th>Loyer HT/mois</th><th>Cycles/jour (hyp.)</th><th>CA lavage/mois HT</th><th>Flux mensuel après prêt*</th><th>Seuil cycles/jour</th><th class="hide-print">Action</th></tr></thead><tbody id="comparison-rows"><tr><td colspan="7">Aucune zone sauvegardée.</td></tr></tbody></table></div>
+<div class="bar hide-print"><button id="export-comparison">Exporter la comparaison CSV</button><button class="secondary" id="print-comparison">Imprimer / enregistrer en PDF</button><button class="secondary" id="clear-comparison">Vider ma sélection</button></div>
+<p class="muted">* Flux simplifié avant fiscalité, amortissements, TVA, rémunération, investissements de renouvellement, CFE non renseignée et variations de trésorerie. Aucun loyer de marché ni devis n'est préchargé.</p>
+</section>
+<section class="panel" id="method">
+<h2>Sources, méthode et limites à connaître</h2>
+<p>INSEE RP 2022 et contours IRIS 2024 ; OpenStreetMap/Geofabrik, comptages non vérifiés. On estime les habitants et résidences principales dans chaque cercle à partir de la fraction des IRIS recouverte, en supposant une distribution uniforme <strong>qui peut être fausse localement</strong>. Une couverture insuffisante du cercle entraîne l'exclusion du score. Les rayons ne sont ni des itinéraires piétons, ni des isochrones.</p>
+<p id="source-dates" class="muted">Sources en cours de chargement.</p>
+<p>La sélection des 50 zones applique un espacement minimal pour éviter de présenter plusieurs IRIS voisins comme des opportunités distinctes. Ces zones doivent être contrôlées sur Google Maps, par observation terrain et avec un local réellement disponible. Les points à proximité des limites de la zone d'étude peuvent manquer de concurrence hors 75/92/93/94.</p>
+<a href="./" class="buttonlike hide-print">Retour à la carte principale</a>
+</section>
+</main>
+<footer><p>Observatoire des laveries · projet indépendant gratuit · données INSEE, IGN/Insee, OpenStreetMap. Aucun résultat n'est une garantie commerciale. Les sauvegardes locales ne sont pas synchronisées entre appareils.</p></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./opportunites.js"></script>
+</body></html>
