@@ -18,7 +18,7 @@ const labels={
 };
 const statusKey='laveries-croisement-verifications-v1';
 let reviews={};try{reviews=JSON.parse(localStorage.getItem(statusKey)||'{}')||{}}catch(_){}
-let doc=null,audit=null,rows=[],filtered=[],markers=null,focus=null;
+let doc=null,audit=null,priorityDoc=null,priorityMap=new Map(),rows=[],filtered=[],markers=null,focus=null;
 const map=L.map('map').setView([48.855,2.35],11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
 markers=L.layerGroup().addTo(map);
@@ -41,14 +41,15 @@ function linkRef(r){
 }
 function getFiltered(){
   const d=$('dept').value,s=$('source').value,q=$('search').value.trim().toLocaleLowerCase('fr'),
-    quality=$('quality').value,geo=$('geo').value,status=$('status').value;
+    quality=$('quality').value,geo=$('geo').value,status=$('status').value,priority=$('priority').value;
   filtered=rows.filter(p=>
     (!d||p.dept===d)&&(!q||[p.name,p.address,p.postcode,p.id].some(x=>String(x||'').toLocaleLowerCase('fr').includes(q)))&&
     (!s||(s==='multi'?p.sources.length>=2:s==='nonosm'?!p.sources.includes('osm'):p.sources.includes(s)))&&
     (!quality||p.quality===quality)&&(!geo||(geo==='yes'?p.lat!==null:p.lat===null))&&
-    (!status||getStatus(p)===status)
+    (!status||getStatus(p)===status)&&(!priority||String(priorityMap.get(p.id)?.priority||'').startsWith(priority))
   );
-  if($('sort').value==='name')filtered.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  if($('sort').value==='priority')filtered.sort((a,b)=>(priorityMap.get(b.id)?.points||0)-(priorityMap.get(a.id)?.points||0)||a.dept.localeCompare(b.dept));
+  else if($('sort').value==='name')filtered.sort((a,b)=>a.name.localeCompare(b.name,'fr'));
   else if($('sort').value==='dept')filtered.sort((a,b)=>a.dept.localeCompare(b.dept)||a.name.localeCompare(b.name,'fr'));
   else filtered.sort((a,b)=>b.sources.length-a.sources.length||a.dept.localeCompare(b.dept)||a.name.localeCompare(b.name,'fr'));
   return filtered;
@@ -61,6 +62,7 @@ function showDetails(id,pan=true){
   $('selected').innerHTML='<h3>'+safe(p.name)+'</h3>'
     +'<p>'+safe(p.address||'Adresse non renseignée')+' · '+safe(p.dept)+'</p>'
     +'<p><strong>'+safe(p.sources.length)+' source(s) · '+safe(labels[p.quality]||p.quality)+'</strong></p>'
+    +(priorityMap.get(p.id)?'<p><strong>Vérification : '+safe(priorityMap.get(p.id).priority)+'</strong> · '+safe(priorityMap.get(p.id).reasons||'')+'</p>':'')
     +'<p>'+matches+'</p>'
     +'<p><a href="'+safe(gmaps(p))+'" target="_blank" rel="noopener noreferrer">Rechercher cet établissement sur Google Maps ↗</a></p>'
     +'<p class="sub">'+safe(p.evidence||'Non vérifié')+'</p>'
@@ -92,6 +94,7 @@ function render(){
     '<tr><td><button class="secondary" type="button" data-select="'+safe(p.id)+'">'+safe(p.name)+'</button><small class="block">'+safe(p.address||'Adresse inconnue')+'</small></td>'
     +'<td>'+safe(p.dept)+'</td><td>'+p.sources.map(src=>'<span class="tag '+(src==='osm'?'good':'')+'">'+safe(labels[src]||src)+'</span>').join('')+'</td>'
     +'<td><small>'+safe(labels[p.quality]||p.quality)+'</small><small class="block">'+(p.lat===null?'Sans position sûre':p.geocoded_by_ban?'Adresse IGN/BAN (commerce non vérifié)':'Position renseignée')+'</small>'
+    +(priorityMap.get(p.id)?'<span class="tag warn">'+safe(priorityMap.get(p.id).priority.split(' — ')[0])+' : à contrôler</span>':'')
     +(getStatus(p)!=='pending'?'<span class="tag warn">'+safe(labels[getStatus(p)])+'</span>':'')+'</td>'
     +'<td><a href="'+safe(gmaps(p))+'" target="_blank" rel="noopener noreferrer">Google Maps ↗</a></td></tr>'
   ).join('')||'<tr><td colspan="5">Aucune fiche correspondant aux filtres.</td></tr>';
@@ -137,10 +140,11 @@ function paintAudit(){
 }
 async function start(){
  try{
-  const [a,b,g]=await Promise.all([
+  const [a,b,g,priorities]=await Promise.all([
     fetch('./data/annuaire-croise.json',{cache:'no-store'}),
     fetch('./data/annuaire-croise-audit.json',{cache:'no-store'}),
-    fetch('./data/geocoded-addresses.json',{cache:'no-store'}).catch(()=>null)
+    fetch('./data/geocoded-addresses.json',{cache:'no-store'}).catch(()=>null),
+    fetch('./data/verification-prioritaire.json',{cache:'no-store'}).catch(()=>null)
   ]);
   if(!a.ok||!b.ok)throw Error('Données croisées non encore publiées : '+a.status+' / '+b.status);
   [doc,audit]=await Promise.all([a.json(),b.json()]);
@@ -159,6 +163,15 @@ async function start(){
       });
     }
   }
+  if(priorities?.ok){
+    priorityDoc=await priorities.json();
+    if(priorityDoc.directory_generated_at===doc.generated_at){
+      priorityMap=new Map((priorityDoc.rows||[]).map(p=>[p.id,p]));
+      const levels=['A','B','C'].map(level=>level+': '+fr([...priorityMap.values()].filter(p=>String(p.priority).startsWith(level)).length));
+      $('review-queue-summary').textContent=fr(priorityMap.size)+' fiches dans la liste de contrôle priorisée, niveaux '+levels.join(' · ')+'. Priorité = charge de vérification, pas probabilité d’existence.';
+    }
+  }
+  if(!priorityMap.size)$('review-queue-summary').textContent='Liste prioritaire indisponible ou plus ancienne que l’annuaire : aucun ordre de contrôle inventé.';
   $('count-ban').textContent=fr(added);
   if(rows.length<900)throw Error('Inventaire croisé insuffisant : aucun total présenté');
   $('count-osm').textContent=fr(doc.sources?.osm?.count);
@@ -173,7 +186,7 @@ async function start(){
   $('summary').textContent='Aucun chiffre consolidé ne peut être confirmé tant que les fichiers ne sont pas publiés.';
  }
 }
-for(const id of ['dept','search','source','quality','geo','status','sort','limit'])
+for(const id of ['dept','search','source','quality','geo','status','priority','sort','limit'])
  $(id).addEventListener(id==='search'?'input':'change',render);
 $('export').onclick=exportRows;
 $('export-backup').onclick=()=>{
@@ -204,8 +217,8 @@ $('restore-backup').onchange=async e=>{
 };
 $('only-new').onclick=()=>{$('source').value='nonosm';render()};
 $('reset').onclick=()=>{
- for(const id of ['dept','search','source','quality','geo','status'])$(id).value='';
- $('sort').value='source';$('limit').value='100';render();
+ for(const id of ['dept','search','source','quality','geo','status','priority'])$(id).value='';
+ $('sort').value='priority';$('limit').value='100';render();
 };
 start();
 })();
