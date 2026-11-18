@@ -248,7 +248,9 @@ def collect_osm():
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    # OSM downloads are handled by the independent Geofabrik PBF workflow.\n    # Never overwrite its verified-department OSM snapshot with an incomplete Overpass response.\n    jobs = (("iris", collect_demography),)
+    # OSM downloads are handled by the independent Geofabrik PBF workflow.
+    # Never overwrite its four-department OSM snapshot with an incomplete Overpass response.
+    jobs = (("iris", collect_demography),)
     errors = {}
     counts = {}
     for name, work in jobs:
