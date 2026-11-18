@@ -1,6 +1,10 @@
 name: Browser smoke test
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Generate opportunity areas
+    types: [completed]
   push:
     paths:
       - tests/browser.mjs
@@ -15,10 +19,13 @@ permissions:
   contents: read
 jobs:
   chromium:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
