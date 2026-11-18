@@ -139,20 +139,29 @@
   }
   function saveReviews(){try{localStorage.setItem('observatoire-laveries-reviews-v1',JSON.stringify(reviewed))}catch(_){}}
   let inventoryRows=[];
+  function googleMapsSearch(r){
+    const name=String(r.name||'').trim();
+    const generic=!name||name.toLowerCase().startsWith('laverie (nom absent)');
+    const query=generic
+      ?'laverie automatique '+Number(r.lat).toFixed(6)+','+Number(r.lon).toFixed(6)
+      :[name,r.address,'France'].filter(Boolean).join(', ');
+    return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(query);
+  }
   function inventory(){
     const query=E('osm-search').value.toLocaleLowerCase('fr'), dep=E('osm-dept').value,decision=E('osm-status').value;
     inventoryRows=(osm||[]).filter(r=>(!dep||r.dep===dep)&&(!query||[r.name,r.address,r.id].some(x=>String(x||'').toLocaleLowerCase('fr').includes(query)))&&(!decision||((reviewed[r.id]?.status)||'pending')===decision));
     const tabs=inventoryRows.slice(0,200);
     E('osm-inventory-summary').textContent=osm
       ? nfr(inventoryRows.length)+' établissements OSM parmi '+nfr(osm.length)+' recensés, visibles : '+Math.min(tabs.length,200)
-        +'. La catégorie OSM peut inclure pressings et blanchisseries ; les contrôles manuels ne sont enregistrés que dans ce navigateur.'
+        +'. La catégorie OSM peut inclure pressings et blanchisseries. Le lien Google ouvre une recherche, sans vérification automatique. Tes statuts restent locaux à ton navigateur.'
       : 'Inventaire OSM statique non disponible : aucun établissement présenté comme recensé.';
     E('osm-inventory-body').innerHTML=tabs.map(r=>
       '<tr><td><button type="button" class="tiny" data-osm="'+escapeHtml(r.id)+'">'+escapeHtml(r.name)+'</button>'
-      +'<small>'+escapeHtml(r.address||'Adresse non renseignée')+' · '+escapeHtml(r.id)+'</small></td>'
+      +'<small>'+escapeHtml(r.address||'Adresse non renseignée')+' · '+escapeHtml(r.id)+'</small>'
+      +'<a class="google-check" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(googleMapsSearch(r))+'">Rechercher sur Google Maps ↗</a></td>'
       +'<td>'+escapeHtml(r.dep)+'</td><td>'+escapeHtml(r.self_service||'Non précisé')+'</td>'
       +'<td><select aria-label="Statut de vérification locale" data-review="'+escapeHtml(r.id)+'">'
-      +[['pending','À vérifier'],['confirmed','Contrôlé sur place'],['excluded','À exclure']].map(([v,l])=>
+      +[['pending','À vérifier'],['google_seen','Fiche Google concordante (non vérifié sur place)'],['confirmed','Contrôlé sur place'],['excluded','À exclure']].map(([v,l])=>
         '<option value="'+v+'"'+((reviewed[r.id]?.status||'pending')===v?' selected':'')+'>'+l+'</option>').join('')+'</select></td></tr>').join('')||
       '<tr><td colspan="4">Aucun établissement correspondant.</td></tr>';
     document.querySelectorAll('[data-osm]').forEach(b=>b.onclick=()=>{
