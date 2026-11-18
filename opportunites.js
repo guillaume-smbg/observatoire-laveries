@@ -8,7 +8,7 @@
   const number = id => Math.max(0,Number($(id).value)||0);
   const storageKey = 'laveries-opportunites-v2';
   const financeKey = 'laveries-opportunites-finance-v2';
-  let opportunityDoc=null, iris=[], osmDoc=null, osm=[], selected=null, visible=[], markers=[], showRivals=false, selectedLayer=null;
+  let opportunityDoc=null, iris=[], osmDoc=null, osm=[], directoryDoc=null, directory=[], addressDoc=null, selected=null, visible=[], markers=[], showRivals=false, selectedLayer=null, walkingLayer=null;
   let saved={};
   let map, rankedLayer, rivalsLayer;
   const FIELDS = ['price','variable','fixed','services','investment','debt','interest','years'];
@@ -42,20 +42,52 @@
   }
   function radius(){return $('radius').value}
   function keyEvidence(){return $('evidence').value}
+  function filteredCandidate(p,mode){
+    if(mode==='all')return true;
+    if(mode==='explicit')return p.quality==='self_service_tagged';
+    if(mode==='plausible')return ['self_service_tagged','possibly_automatic'].includes(p.quality);
+    if(mode==='dir_all')return true;
+    const plausible=!['probably_not_automatic','possibly_nonautomatic','uncertain_type','unclassified'].includes(p.quality);
+    if(mode==='dir_plausible')return plausible;
+    if(mode==='dir_multi')return plausible && Array.isArray(p.sources)&&p.sources.length>=2;
+    return false;
+  }
+  function isDirectoryMode(mode=keyEvidence()){return mode.startsWith('dir_')}
+  function reviewedExclusions(){
+    if(!$('exclude-local').checked)return [];
+    let status={};try{status=JSON.parse(localStorage.getItem('laveries-croisement-verifications-v1')||'{}')||{}}catch(_){}
+    return directory.filter(p=>status[p.id]?.status==='excluded'&&p.lat!==null);
+  }
+  function countCandidates(p,mode=keyEvidence()){
+    const c=p.catchments?.[radius()];
+    if(!c)return 0;
+    const base=isDirectoryMode(mode)?c.directory?.[mode.slice(4)]:c.osm?.[mode];
+    if(!Number.isFinite(Number(base)))return null;
+    if(!isDirectoryMode(mode)||!$('exclude-local').checked)return Number(base);
+    const r=Number(radius()),removals=reviewedExclusions().filter(c=>filteredCandidate(c,mode)&&distance(p,c)<=r).length;
+    return Math.max(0,Number(base)-removals);
+  }
+  function indexFor(p,mode=keyEvidence()){
+    const d=p.catchments?.[radius()];
+    if(!d||d.coverage<Math.max(.80,Number($('coverage').value))||
+      d.small_pct===null||d.renters_pct===null||!Number.isFinite(d.homes))return null;
+    const competitors=countCandidates(p,mode);
+    if(competitors===null)return null;
+    const proportion=Math.min(100,(d.homes/(p90s[radius()]||1))*100);
+    const lessCrowded=Math.max(0,100-16*competitors);
+    return Math.round((.38*proportion+.25*d.small_pct+.22*d.renters_pct+.15*lessCrowded)*10)/10;
+  }
+  function sensitivity(p){
+    const cases=['dir_multi','dir_plausible','dir_all'].map(k=>indexFor(p,k)).filter(x=>x!==null);
+    if(cases.length<3)return '';
+    return 'Sensibilité concurrence annuaires : '+fr(Math.min(...cases),1)+' à '+fr(Math.max(...cases),1)+'/100, selon les inclusions de fiches non vérifiées.';
+  }
   function confidence(p){
     const c=p.catchments?.[radius()];
     return c?c.coverage:0;
   }
   let p90s={};
-  function estimateScore(p){
-    const d=p.catchments?.[radius()];
-    if(!d||d.coverage<Math.max(.80,Number($('coverage').value))||
-      d.small_pct===null||d.renters_pct===null||!Number.isFinite(d.homes))return null;
-    const proportion=Math.min(100,(d.homes/(p90s[radius()]||1))*100);
-    const competitor=d.osm[keyEvidence()];
-    const lessCrowded=Math.max(0,100-16*competitor);
-    return Math.round((.38*proportion+.25*d.small_pct+.22*d.renters_pct+.15*lessCrowded)*10)/10;
-  }
+  function estimateScore(p){return indexFor(p,keyEvidence())}
   function pr90(values){
     const v=values.filter(Number.isFinite).sort((a,b)=>a-b);
     return Math.max(1,v[Math.round(.9*(v.length-1))]||1);
@@ -78,7 +110,7 @@
       if(mode==='housing')return b.catchment.homes-a.catchment.homes;
       if(mode==='small')return b.catchment.small_pct-a.catchment.small_pct;
       if(mode==='renters')return b.catchment.renters_pct-a.catchment.renters_pct;
-      if(mode==='few')return a.catchment.osm[keyEvidence()]-b.catchment.osm[keyEvidence()]||b.score-a.score;
+      if(mode==='few')return countCandidates(a)-countCandidates(b)||b.score-a.score;
       return b.score-a.score;
     });
     return out;
@@ -99,14 +131,15 @@
     $('k-scores').textContent=fr(all.length);
     $('k-saved').textContent=fr(Object.keys(saved).length);
     $('k-osm').textContent=fr(osm.length);
-    $('rank-note').textContent=fr(all.length)+' IRIS répondant aux critères, '+fr(top.length)+' secteurs distincts affichés. Rayon : '+radius()+' m. '+$('evidence').selectedOptions[0].textContent+'.';
+    $('k-directory').textContent=directory.length?fr(directoryDoc.rows.length):'—';
+    $('rank-note').textContent=fr(all.length)+' IRIS répondant aux critères, '+fr(top.length)+' secteurs distincts affichés. Rayon : '+radius()+' m. '+$('evidence').selectedOptions[0].textContent+'. Ces comptages ne sont pas des commerces vérifiés.';
     $('list-subtitle').textContent='50 secteurs au maximum · sélection par indice expérimental et espacement géographique · pas un classement des locaux disponibles.';
     $('top-rows').innerHTML=top.map((p,i)=>{
       const c=p.catchment;
       return '<tr><td><button type="button" class="tiny" data-focus="'+esc(p.id)+'">'+(i+1)+'. '+esc(p.commune)+'</button><small>'+esc(p.name)+' · IRIS '+esc(p.id)+'</small></td>'
         +'<td><strong>'+fr(p.score,1)+'/100</strong></td><td>'+fr(c.population)+'</td>'
         +'<td>'+fr(c.small_pct,1)+' %</td><td>'+fr(c.renters_pct,1)+' %</td>'
-        +'<td>'+c.osm[keyEvidence()]+'</td><td><button class="tiny secondary" data-save="'+esc(p.id)+'">Comparer</button></td></tr>';
+        +'<td>'+fr(countCandidates(p))+'</td><td><button class="tiny secondary" data-save="'+esc(p.id)+'">Comparer</button></td></tr>';
     }).join('')||'<tr><td colspan="7">Aucune zone conforme aux critères. Élargissez les filtres.</td></tr>';
     document.querySelectorAll('[data-focus]').forEach(b=>b.addEventListener('click',()=>select(b.dataset.focus)));
     document.querySelectorAll('[data-save]').forEach(b=>b.addEventListener('click',()=>save(b.dataset.save)));
@@ -147,11 +180,11 @@
       +'<p><strong>Indice indicatif : '+(sc===null?'non calculable':fr(sc,1)+'/100')+'</strong> · IRIS '+esc(p.id)+'</p>'
       +'<div class="detail-grid"><div><small>Habitants estimés</small><strong>'+fr(d.population)+'</strong></div>'
       +'<div><small>Résidences principales estimées</small><strong>'+fr(d.homes)+'</strong></div>'
-      +'<div><small>Points OSM selon filtre</small><strong>'+fr(d.osm[keyEvidence()])+'</strong></div>'
+      +'<div><small>Fiches candidates selon filtre</small><strong>'+fr(countCandidates(p))+'</strong></div>'
       +'<div><small>Part de petits logements</small><strong>'+(d.small_pct===null?'ND':fr(d.small_pct,1)+' %')+'</strong></div>'
       +'<div><small>Part de locataires</small><strong>'+(d.renters_pct===null?'ND':fr(d.renters_pct,1)+' %')+'</strong></div>'
       +'<div><small>Couverture IRIS du cercle</small><strong>'+fr(d.coverage*100,1)+' %</strong></div></div>'
-      +'<p class="muted">Estimations par pondération surfacique des IRIS en '+r+' m, pas des habitants recensés exactement dans le cercle. La zone représentée n’est pas un local disponible.</p>'
+      +'<p class="muted">'+esc(sensitivity(p))+'</p><p class="muted">Estimations par pondération surfacique des IRIS en '+r+' m, pas des habitants recensés exactement dans le cercle. Les fiches concurrentes ne sont pas des laveries confirmées. La zone représentée n’est pas un local disponible.</p>'
       +'<p><a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.lat+','+p.lon)+'" target="_blank" rel="noopener noreferrer">Examiner le secteur sur Google Maps ↗</a></p>';
     renderRivals(p);
     if(selectedLayer)selectedLayer.clearLayers();
@@ -210,24 +243,24 @@
   function exportRanking(){
     const rows=[['IRIS','commune','quartier','departement','latitude','longitude','rayon_m',
       'population_estimee','residences_principales_estimees','petits_logements_pct','locataires_pct',
-      'couverture_pct','osm_selon_filtre','filtre_osm','indice_heuristique','donnees_insee','donnees_osm','limites']];
+      'couverture_pct','concurrents_candidats_selon_filtre','filtre_sources','indice_heuristique','donnees_insee','donnees_osm','limites']];
     for(const p of visible){
       const d=p.catchment;
       rows.push([p.id,p.commune,p.name,p.department,p.lat,p.lon,radius(),d.population,d.homes,d.small_pct,d.renters_pct,
-        Math.round(d.coverage*100),d.osm[keyEvidence()],keyEvidence(),p.score,opportunityDoc.insee_generated_at,
-        opportunityDoc.osm_generated_at,'Estimations surfaciques, rayon a vol d oiseau, OSM non verifie, score non valide']);
+        Math.round(d.coverage*100),countCandidates(p),keyEvidence(),p.score,opportunityDoc.insee_generated_at,
+        opportunityDoc.osm_generated_at,'Estimations surfaciques, rayon a vol d oiseau, annuaires et OSM non verifies, score non valide']);
     }
     download('classement-opportunites-exploratoires.csv',csv(rows));
   }
   function exportComparison(){
     const rows=[['IRIS','commune','quartier','rayon_m','population_estimee','logements_estimes','part_petits_pct',
-      'locataires_pct','osm_points_non_verifies','loyer_hc_ht_mensuel','cycles_jour_hypothese','ca_lavage_ht_mensuel',
+      'locataires_pct','fiches_candidates_non_verifiees','loyer_hc_ht_mensuel','cycles_jour_hypothese','ca_lavage_ht_mensuel',
       'cash_prudent_apres_pret','cash_central_apres_pret','cash_dynamique_apres_pret','seuil_cycles_jour','source','limites']];
     for(const id of Object.keys(saved)){
       const p=iris.find(x=>x.id===id);if(!p)continue;
       const d=p.catchments[radius()],f=finance(p);
       rows.push([p.id,p.commune,p.name,radius(),d.population,d.homes,d.small_pct,d.renters_pct,
-        d.osm[keyEvidence()],f.rent,f.cycles,Math.round(f.ca),Math.round(f.cashPrudent),Math.round(f.cash),Math.round(f.cashDynamic),f.breakEven?.toFixed(1)??'',
+        countCandidates(p),f.rent,f.cycles,Math.round(f.ca),Math.round(f.cashPrudent),Math.round(f.cash),Math.round(f.cashDynamic),f.breakEven?.toFixed(1)??'',
         opportunityDoc.source,'Hypothese de frequentation manuelle, IRIS repartition uniforme, OSM non verifie']);
     }
     download('comparatif-emplacements-laveries.csv',csv(rows));
@@ -252,12 +285,12 @@
     }
   }
   function reset(){
-    $('dept').value='';$('search').value='';$('radius').value='500';$('evidence').value='plausible';
+    $('dept').value='';$('search').value='';$('radius').value='500';$('evidence').value='dir_multi';
     $('small-share').value='0';$('coverage').value='.8';$('sort').value='score';$('dedupe').value='650';
     renderRanking();
   }
   function wire(){
-    for(const id of ['dept','search','radius','evidence','small-share','coverage','sort','dedupe']){
+    for(const id of ['dept','search','radius','evidence','small-share','coverage','sort','dedupe','exclude-local']){
       $(id).addEventListener(id==='search'?'input':'change',renderRanking);
     }
     for(const id of FIELDS)$(id).addEventListener('change',saveFinance);
@@ -301,6 +334,7 @@
     }
     $('source-dates').textContent='INSEE / IRIS : '+String(opportunityDoc.insee_generated_at||'inconnue').slice(0,10)
       +' · extraction OSM de calcul : '+String(opportunityDoc.osm_generated_at||'inconnue').slice(0,10)
+      +' · annuaires croisés : '+String(opportunityDoc.directory_generated_at||'inconnue').slice(0,10)
       +' · génération des rayons : '+String(opportunityDoc.generated_at||'inconnue').slice(0,10)
       +(osmDoc&&osmDoc.generated_at!==opportunityDoc.osm_generated_at?' · ATTENTION : le fichier OSM a été actualisé après la génération des calculs ; rafraîchir les opportunités.':'');
     $('loading').textContent='Données chargées : '+fr(iris.length)+' quartiers IRIS, rayons 300/500/1000 m et '+fr(osm.length)+' points OSM non vérifiés.';
