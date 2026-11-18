@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Build an OSM-mapped, NON-verified laundry inventory from a dated Geofabrik PBF snapshot.
+REFRESH EVIDENCE 2026-11-18: a new PBF is downloaded in full on each run; prior results are used only for the delta audit.
 No fabricated businesses. No private credentials. Node and way tags only; relations not processed.
 """
 import datetime as dt
