@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - tests/browser.mjs
+      - tests/opportunities-browser.mjs
+      - opportunites.js
+      - opportunites.html
       - .github/workflows/browser.yml
 permissions:
   contents: read
@@ -23,9 +26,12 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/observatoire-http.log 2>&1 &
           sleep 2
       - run: node tests/browser.mjs
+      - run: node tests/opportunities-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: observatoire-smoke
-          path: /tmp/observatoire-smoke.png
+          path: |
+            /tmp/observatoire-smoke.png
+            /tmp/observatoire-opportunites.png
           if-no-files-found: ignore
