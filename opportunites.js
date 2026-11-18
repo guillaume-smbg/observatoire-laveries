@@ -11,6 +11,7 @@
   let opportunityDoc=null, iris=[], osmDoc=null, osm=[], directoryDoc=null, directory=[], addressDoc=null, selected=null, visible=[], markers=[], showRivals=false, selectedLayer=null, walkingLayer=null;
   let saved={};
   let map, rankedLayer, rivalsLayer;
+  let excludedCache=[];
   const FIELDS = ['price','variable','fixed','services','investment','debt','interest','years'];
   function getStore(key,fallback){try {return JSON.parse(localStorage.getItem(key)||'null')||fallback} catch(_){return fallback}}
   function putStore(key,obj){try{localStorage.setItem(key,JSON.stringify(obj))}catch(_){}}
@@ -53,11 +54,12 @@
     return false;
   }
   function isDirectoryMode(mode=keyEvidence()){return mode.startsWith('dir_')}
-  function reviewedExclusions(){
-    if(!$('exclude-local').checked)return [];
+  function refreshExcluded(){
+    if(!$('exclude-local').checked){excludedCache=[];return}
     let status={};try{status=JSON.parse(localStorage.getItem('laveries-croisement-verifications-v1')||'{}')||{}}catch(_){}
-    return directory.filter(p=>status[p.id]?.status==='excluded'&&p.lat!==null);
+    excludedCache=directory.filter(p=>status[p.id]?.status==='excluded'&&p.lat!==null);
   }
+  function reviewedExclusions(){return excludedCache}
   function countCandidates(p,mode=keyEvidence()){
     const c=p.catchments?.[radius()];
     if(!c)return 0;
@@ -125,6 +127,7 @@
   }
   function scoreColor(v){return v>=80?'#0d7963':v>=65?'#287ca6':v>=50?'#cc8c2e':'#9c6a78'}
   function renderRanking(){
+    refreshExcluded();
     if(!iris.length){$('top-rows').innerHTML='<tr><td colspan="7">Les données géographiques ne sont pas disponibles.</td></tr>';return}
     const all=getRows(),top=distinct(all,50);visible=all;
     $('k-iris').textContent=fr(iris.length);
@@ -162,17 +165,53 @@
     return dist<=700?best:null;
   }
   function renderRivals(p){
-    const r=Number(radius());
-    const within=osm.map(x=>({...x,dist:distance(p,x)})).filter(x=>x.dist<=r).sort((a,b)=>a.dist-b.dist);
-    const filtered=within.filter(x=>keyEvidence()==='all'||(keyEvidence()==='explicit'
-      ?x.quality==='self_service_tagged':['self_service_tagged','possibly_automatic'].includes(x.quality)));
-    $('compete-list').innerHTML='<p><strong>'+filtered.length+' points OSM</strong> à '+r+' m, selon le filtre choisi. Non vérifiés, certains peuvent être des pressings.</p>'
-      +(filtered.length?'<div>'+filtered.slice(0,12).map(x=>
+    const r=Number(radius()),mode=keyEvidence(),records=isDirectoryMode(mode)?directory:osm;
+    const within=records.filter(x=>x.lat!==null).map(x=>({...x,dist:distance(p,x)}))
+      .filter(x=>x.dist<=r&&filteredCandidate(x,mode)&&
+        (!isDirectoryMode(mode)||!$('exclude-local').checked||!excludedCache.some(y=>y.id===x.id)))
+      .sort((a,b)=>a.dist-b.dist);
+    const text=isDirectoryMode(mode)?'fiches candidates des annuaires croisés':'points OSM';
+    $('compete-list').innerHTML='<p><strong>'+within.length+' '+text+'</strong> à '+r+' m selon les sources sélectionnées, NON vérifiés en activité.</p>'
+      +(within.length?'<div>'+within.slice(0,20).map(x=>
         '<p><a href="'+esc(googleLink(x))+'" target="_blank" rel="noopener noreferrer">'+esc(x.name||'Laverie sans nom')+'</a>'
-        +'<small> · '+Math.round(x.dist)+' m · '+esc(x.quality||'non classé')+' · <a href="'+esc(walkingDirections(p,x))+'" target="_blank" rel="noopener noreferrer">itinéraire à pied ↗</a></small></p>').join('')+'</div>':'<p>Aucun point OSM renseigné dans ce rayon. Ne signifie pas absence réelle de concurrent.</p>');
+        +'<small> · '+Math.round(x.dist)+' m · '+esc((x.sources||['osm']).join(' + '))+ (x.geocoded_by_ban?' · adresse IGN/BAN, pas commerce confirmé':'')+
+        ' · <a href="'+esc(walkingDirections(p,x))+'" target="_blank" rel="noopener noreferrer">itinéraire à pied ↗</a></small></p>').join('')+'</div>':
+        '<p>Aucune fiche référencée dans ce rayon. Cela ne prouve pas l’absence réelle de concurrence.</p>');
+  }
+  async function showWalkIsochrones(){
+    if(!selected){$('walk-status').textContent='Sélectionnez d’abord une zone.';return}
+    const p=selected;
+    $('walk-status').textContent='Recherche du réseau piéton pour '+p.commune+'…';
+    const req={locations:[{lat:p.lat,lon:p.lon}],costing:'pedestrian',
+      contours:[{time:5},{time:10},{time:15}],polygons:true,denoise:.15,generalize:20};
+    // Valhalla public demo. No API key. Single user-triggered query, no background sweeps.
+    const url='https://valhalla1.openstreetmap.de/isochrone?json='+encodeURIComponent(JSON.stringify(req));
+    try{
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),13000);
+      let response;
+      try{response=await fetch(url,{mode:'cors',signal:controller.signal})}
+      finally{clearTimeout(timeout)}
+      if(!response.ok)throw Error('Service externe HTTP '+response.status);
+      const result=await response.json();
+      if(result.type!=='FeatureCollection'||!Array.isArray(result.features)||!result.features.length)throw Error('Aucun contour piéton disponible');
+      if(walkingLayer){map.removeLayer(walkingLayer);walkingLayer=null}
+      const colors=['#0b855f','#177fb2','#dc8a28'];
+      walkingLayer=L.geoJSON(result,{style:feature=>{
+        const t=Number(feature.properties?.contour||feature.properties?.time||10);
+        const color=t<=5?colors[0]:t<=10?colors[1]:colors[2];
+        return {color,weight:2,fillColor:color,fillOpacity:.11};
+      }}).addTo(map);
+      $('walk-status').textContent='Isochrones piétons 5 / 10 / 15 min issus du réseau OpenStreetMap via Valhalla (service de démonstration). Ils ne modifient pas le classement géométrique.';
+      if(walkingLayer.getBounds().isValid())map.fitBounds(walkingLayer.getBounds(),{padding:[14,14],maxZoom:15});
+    }catch(err){
+      $('walk-status').textContent='Isochrones piétons indisponibles ('+err.message+'). La carte continue d’afficher les rayons géométriques ; aucune distance piétonne n’est inventée.';
+    }
   }
   function select(id,pan=true){
-    const p=iris.find(x=>x.id===id);if(!p)return;selected=p;
+    const p=iris.find(x=>x.id===id);if(!p)return;
+    if(selected?.id!==id&&walkingLayer){map.removeLayer(walkingLayer);walkingLayer=null;$('walk-status').textContent='Zone changée : anciens isochrones masqués. Cliquez pour recalculer à pied.'}
+    selected=p;
     const r=radius(),d=p.catchments[r],sc=estimateScore(p);
     $('save-place').disabled=false;
     $('save-place').textContent=saved[p.id]?'Déjà sauvegardé · retirer':'Ajouter à comparer';
@@ -298,6 +337,8 @@
     $('download-csv').onclick=exportRanking;
     $('export-comparison').onclick=exportComparison;
     $('show-competitors').onclick=toggleOSM;
+    $('walk-iso').onclick=showWalkIsochrones;
+    $('walk-clear').onclick=()=>{if(walkingLayer){map.removeLayer(walkingLayer);walkingLayer=null}$('walk-status').textContent='Isochrones masqués. Les rayons géométriques demeurent visibles.'};
     $('reset-filters').onclick=reset;
     $('clear-comparison').onclick=()=>{
       if(!Object.keys(saved).length)return;
