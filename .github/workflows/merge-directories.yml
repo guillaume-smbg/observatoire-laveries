@@ -5,6 +5,11 @@ on:
       - scripts/merge_directories.py
       - .github/workflows/merge-directories.yml
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Refresh four-department OSM inventory (Geofabrik)
+      - Refresh official SIRENE candidates
+    types: [completed]
   schedule:
     - cron: "15 6 * * 5"
 permissions:
@@ -14,10 +19,13 @@ concurrency:
   cancel-in-progress: true
 jobs:
   audit:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
