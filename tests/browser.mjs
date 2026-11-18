@@ -21,6 +21,10 @@ try {
   await page.locator('#sirene-dept').selectOption('75');
   await page.locator('#sirene-scope').selectOption('unmapped');
   assert.ok(await page.locator('#sirene-summary').count(),'Administrative candidates must render clear status');
+  await page.locator('#rank-osm-evidence').selectOption('probable');
+  await page.locator('#rank-osm-evidence').selectOption('all');
+  await page.waitForFunction(() => document.getElementById('sirene-source')?.textContent?.includes('établissements déclarés'),{timeout:35000});
+  assert.ok((await page.locator('#sirene-body tr').count())>0,'Official SIRENE candidates table should load');
   await page.locator('#osm-quality').selectOption('self_service_tagged');
   assert.ok(await page.locator('#osm-inventory-summary').count(),'OSM evidence filtering must update');
   await page.locator('#osm-quality').selectOption('');
