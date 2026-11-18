@@ -174,8 +174,10 @@
     const service=number('services'),fixed=number('fixed'),debtService=loan(),margin=price-variable;
     const ca=cycles*monthly*price;
     const cash=cycles*monthly*margin+service-fixed-rent-debtService;
+    const cashPrudent=cycles*.65*monthly*margin+service-fixed-rent-debtService;
+    const cashDynamic=cycles*1.35*monthly*margin+service-fixed-rent-debtService;
     const breakEven=margin>0?Math.max(0,(fixed+rent+debtService-service)/(margin*monthly)):null;
-    return {ca,cash,breakEven,rent,cycles};
+    return {ca,cash,cashPrudent,cashDynamic,breakEven,rent,cycles};
   }
   function renderComparison(){
     $('k-saved').textContent=Object.keys(saved).length;
@@ -186,10 +188,10 @@
         +'<td><label><span class="hide-print">Loyer HT (€)</span><input type="number" min="0" step="50" data-rent="'+esc(p.id)+'" value="'+f.rent+'"></label><span class="print-value">'+eur(f.rent)+'</span></td>'
         +'<td><label><span class="hide-print">Cycles/jour</span><input type="number" min="0" step="1" data-cycles="'+esc(p.id)+'" value="'+f.cycles+'"></label><span class="print-value">'+fr(f.cycles)+'</span></td>'
         +'<td>'+eur(f.ca)+'</td>'
-        +'<td><strong style="color:'+(f.cash<0?'#a33b3b':'#0a6e59')+'">'+eur(f.cash)+'</strong></td>'
+        +'<td>'+eur(f.cashPrudent)+'</td><td><strong style="color:'+(f.cash<0?'#a33b3b':'#0a6e59')+'">'+eur(f.cash)+'</strong></td><td>'+eur(f.cashDynamic)+'</td>'
         +'<td>'+(f.breakEven===null?'non atteignable':fr(f.breakEven,1))+'</td>'
         +'<td class="hide-print"><button class="tiny secondary" data-remove="'+esc(p.id)+'">Retirer</button></td></tr>';
-    }).join('')||'<tr><td colspan="7">Aucune zone sauvegardée. Cliquez sur « Comparer » dans le classement.</td></tr>';
+    }).join('')||'<tr><td colspan="9">Aucune zone sauvegardée. Cliquez sur « Comparer » dans le classement.</td></tr>';
     document.querySelectorAll('[data-rent]').forEach(x=>x.addEventListener('change',()=>updateSite(x.dataset.rent,'rent',x.value)));
     document.querySelectorAll('[data-cycles]').forEach(x=>x.addEventListener('change',()=>updateSite(x.dataset.cycles,'cycles',x.value)));
     document.querySelectorAll('[data-remove]').forEach(x=>x.addEventListener('click',()=>save(x.dataset.remove)));
@@ -215,12 +217,12 @@
   function exportComparison(){
     const rows=[['IRIS','commune','quartier','rayon_m','population_estimee','logements_estimes','part_petits_pct',
       'locataires_pct','osm_points_non_verifies','loyer_hc_ht_mensuel','cycles_jour_hypothese','ca_lavage_ht_mensuel',
-      'cash_flow_apres_pret_simplifie','seuil_cycles_jour','source','limites']];
+      'cash_prudent_apres_pret','cash_central_apres_pret','cash_dynamique_apres_pret','seuil_cycles_jour','source','limites']];
     for(const id of Object.keys(saved)){
       const p=iris.find(x=>x.id===id);if(!p)continue;
       const d=p.catchments[radius()],f=finance(p);
       rows.push([p.id,p.commune,p.name,radius(),d.population,d.homes,d.small_pct,d.renters_pct,
-        d.osm[keyEvidence()],f.rent,f.cycles,Math.round(f.ca),Math.round(f.cash),f.breakEven?.toFixed(1)??'',
+        d.osm[keyEvidence()],f.rent,f.cycles,Math.round(f.ca),Math.round(f.cashPrudent),Math.round(f.cash),Math.round(f.cashDynamic),f.breakEven?.toFixed(1)??'',
         opportunityDoc.source,'Hypothese de frequentation manuelle, IRIS repartition uniforme, OSM non verifie']);
     }
     download('comparatif-emplacements-laveries.csv',csv(rows));
