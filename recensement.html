@@ -33,6 +33,7 @@ small.block{display:block}.tag{display:inline-block;font-size:11px;background:#e
 <div class="kpi"><small>Fiches BAUG accessibles</small><strong id="count-baug">—</strong></div>
 <div class="kpi"><small>Candidats après rapprochements*</small><strong id="count-total">—</strong></div>
 <div class="kpi"><small>Candidats avec position</small><strong id="count-geo">—</strong></div>
+<div class="kpi"><small>Adresses complémentaires IGN/BAN</small><strong id="count-ban">—</strong></div>
 </div>
 <p class="sub">* Le rapprochement est volontairement prudent : il peut rester des doublons. Les sources ne sont pas forcément exhaustives et ne doivent pas être additionnées.</p>
 </section>
@@ -48,10 +49,10 @@ small.block{display:block}.tag{display:inline-block;font-size:11px;background:#e
 <label>Tri<select id="sort"><option value="source">Sources recoupées</option><option value="name">Nom</option><option value="dept">Département</option></select></label>
 <label>Limite d'affichage<select id="limit"><option value="100" selected>100 lignes</option><option value="300">300 lignes</option><option value="1000">1 000 lignes</option><option value="10000">Toutes les lignes</option></select></label>
 </div>
-<div class="actions"><button id="export">Exporter les résultats et mes vérifications en CSV</button><button class="secondary" id="only-new">Afficher les pistes absentes d'OSM</button><button class="secondary" id="reset">Réinitialiser les filtres</button></div>
-<p id="summary" class="sub" role="status"></p></section>
+<div class="actions"><button id="export">Exporter les résultats et mes vérifications en CSV</button><button class="secondary" id="export-backup">Sauvegarder mes contrôles JSON</button><label style="display:inline-flex;align-items:center;gap:5px">Restaurer mes contrôles JSON <input type="file" id="restore-backup" accept=".json,application/json" style="width:180px"></label><button class="secondary" id="only-new">Afficher les pistes absentes d'OSM</button><button class="secondary" id="reset">Réinitialiser les filtres</button></div>
+<p id="summary" class="sub" role="status"></p><p id="backup-status" class="sub" role="status"></p></section>
 <div class="layout">
-<section class="card"><h2>Carte des candidats géolocalisés</h2><div id="map"></div><p class="sub">Les points sans position sûre restent consultables dans le tableau. Une adresse identique ou une proximité ne prouve pas que deux sources parlent du même commerce. Tous les points restent non vérifiés.</p></section>
+<section class="card"><h2>Carte des candidats géolocalisés</h2><div id="map"></div><p class="sub">Les adresses IGN/BAN peuvent être géolocalisées à un numéro de rue, sans preuve que le commerce y existe. Les points sans position sûre restent consultables dans le tableau. Une adresse identique ou une proximité ne prouve pas que deux sources parlent du même commerce. Tous les points restent non vérifiés.</p></section>
 <section class="card" id="results"><h2>Fiches et vérification Google Maps</h2><div id="selected">Cliquez sur une fiche du tableau ou un point de la carte.</div></section>
 </div>
 <section class="card"><h2>Résultats correspondant aux filtres</h2><div class="tablewrap"><table><thead><tr><th>Établissement / commune</th><th>Département</th><th>Sources</th><th>Type / position</th><th>Action</th></tr></thead><tbody id="body"><tr><td colspan="5">Données en cours de chargement…</td></tr></tbody></table></div></section>
