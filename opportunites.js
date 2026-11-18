@@ -316,10 +316,15 @@
   function toggleOSM(){
     showRivals=!showRivals;rivalsLayer.clearLayers();
     if(!showRivals)return;
-    for(const p of osm){
-      const col=p.quality==='self_service_tagged'?'#217a55':p.quality==='probably_not_automatic'?'#d48b32':'#7b8793';
+    const mode=keyEvidence(),records=isDirectoryMode(mode)?directory:osm;
+    refreshExcluded();
+    const excluded=new Set(excludedCache.map(x=>x.id));
+    for(const p of records){
+      if(p.lat===null||!filteredCandidate(p,mode)||(isDirectoryMode(mode)&&$('exclude-local').checked&&excluded.has(p.id)))continue;
+      const col=p.geocoded_by_ban?'#9061a9':p.quality==='self_service_tagged'?'#217a55':
+        ['probably_not_automatic','possibly_nonautomatic'].includes(p.quality)?'#d48b32':'#7b8793';
       L.circleMarker([p.lat,p.lon],{radius:3,color:col,fillOpacity:.8,weight:.5})
-        .bindPopup('<strong>'+esc(p.name)+'</strong><p><a href="'+esc(googleLink(p))+'" target="_blank" rel="noopener noreferrer">Rechercher sur Google Maps</a></p><small>Source OSM non vérifiée.</small>')
+        .bindPopup('<strong>'+esc(p.name)+'</strong><p><a href="'+esc(googleLink(p))+'" target="_blank" rel="noopener noreferrer">Rechercher sur Google Maps</a></p><small>Fiche non vérifiée.'+(p.geocoded_by_ban?' Adresse IGN/BAN, pas commerce localisé avec certitude.':'')+'</small>')
         .addTo(rivalsLayer);
     }
   }
@@ -364,7 +369,10 @@
   }
   async function start(){
     initializeMap();restoreFinance();wire();
-    const [a,b]=await Promise.allSettled([get('./data/opportunities.json'),get('./data/laveries-osm.json')]);
+    const [a,b,c,d]=await Promise.allSettled([
+      get('./data/opportunities.json'),get('./data/laveries-osm.json'),
+      get('./data/annuaire-croise.json'),get('./data/geocoded-addresses.json')
+    ]);
     if(a.status!=='fulfilled')throw Error('Les statistiques de proximité ne sont pas encore disponibles : '+a.reason.message);
     opportunityDoc=a.value;iris=Array.isArray(opportunityDoc.rows)?opportunityDoc.rows:[];
     if(iris.length<2000)throw Error('Données IRIS incomplètes, classement suspendu.');
@@ -373,12 +381,32 @@
     if(b.status==='fulfilled'){
       osmDoc=b.value;osm=Array.isArray(osmDoc.rows)?osmDoc.rows:[];
     }
+    if(c.status==='fulfilled'){
+      directoryDoc=c.value;
+      if(opportunityDoc.directory_generated_at&&opportunityDoc.directory_generated_at!==directoryDoc.generated_at){
+        throw Error('Analyse de concurrence non recalculée après la mise à jour des annuaires. Le classement est suspendu pour éviter des chiffres mélangés.');
+      }
+      if(d.status==='fulfilled'){
+        addressDoc=d.value;
+        if(addressDoc.directory_generated_at!==directoryDoc.generated_at)addressDoc=null;
+      }
+      const mapped=new Map((addressDoc?.rows||[]).filter(x=>x.precision==='BAN_housenumber_address_not_business').map(x=>[x.id,x]));
+      directory=(directoryDoc.rows||[]).map(p=>{
+        const geo=p.lat===null?mapped.get(p.id):null;
+        return geo?{...p,lat:geo.lat,lon:geo.lon,geocoded_by_ban:true,geocoding_score:geo.score}:p;
+      });
+    }
+    if(directory.length<1200)throw Error('Sources BAUG/Laverie Ouvert non disponibles : un classement limité à OSM serait trompeur.');
+    if(!iris[0]?.catchments?.['500']?.directory){
+      throw Error('Analyse géographique ancienne, sans recoupement des annuaires : recalcul requis.');
+    }
     $('source-dates').textContent='INSEE / IRIS : '+String(opportunityDoc.insee_generated_at||'inconnue').slice(0,10)
       +' · extraction OSM de calcul : '+String(opportunityDoc.osm_generated_at||'inconnue').slice(0,10)
       +' · annuaires croisés : '+String(opportunityDoc.directory_generated_at||'inconnue').slice(0,10)
+      +' · adresses IGN/BAN : '+String(opportunityDoc.address_geocoding_generated_at||'non incluses').slice(0,10)
       +' · génération des rayons : '+String(opportunityDoc.generated_at||'inconnue').slice(0,10)
       +(osmDoc&&osmDoc.generated_at!==opportunityDoc.osm_generated_at?' · ATTENTION : le fichier OSM a été actualisé après la génération des calculs ; rafraîchir les opportunités.':'');
-    $('loading').textContent='Données chargées : '+fr(iris.length)+' quartiers IRIS, rayons 300/500/1000 m et '+fr(osm.length)+' points OSM non vérifiés.';
+    $('loading').textContent='Données chargées : '+fr(iris.length)+' IRIS, '+fr(directory.length)+' pistes recoupées, dont '+fr(directory.filter(x=>x.lat!==null).length)+' positionnées. Les fiches ne sont pas des laveries confirmées.';
     renderRanking();
   }
   start().catch(error=>{
