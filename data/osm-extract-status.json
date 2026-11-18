@@ -1,0 +1,13 @@
+{
+  "source_url": "https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.pbf",
+  "generated_at": "2026-11-18T09:54:08.018333+00:00",
+  "total": 929,
+  "counts_by_department": {
+    "75": 526,
+    "92": 161,
+    "93": 121,
+    "94": 121
+  },
+  "method": "Geofabrik PBF with official French department polygons, nodes and ways",
+  "limit": "Not an inventory of verified self-service laundromats"
+}
