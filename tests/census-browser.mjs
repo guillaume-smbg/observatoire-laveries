@@ -16,7 +16,16 @@ try{
  assert.ok((await page.locator('#summary').innerText()).includes('candidats'),'Priority filter did not update');
  await page.locator('#priority').selectOption('');
  const ban=Number((await page.locator('#count-ban').innerText()).replace(/\s/g,''));
- assert.ok(ban>=35,'Strict IGN/BAN address suggestions missing');
+ const geocodeState=await page.evaluate(async()=>{
+  const [d,g]=await Promise.all([fetch('./data/annuaire-croise.json').then(r=>r.json()),fetch('./data/geocoded-addresses.json').then(r=>r.ok?r.json():null)]);
+  return {sameSnapshot:!!g&&g.directory_generated_at===d.generated_at&&g.address_only_not_business_verification===true,accepted:g?.accepted||0};
+ });
+ if(geocodeState.sameSnapshot){
+  assert.ok(geocodeState.accepted>=35&&ban>=35,'Strict IGN/BAN address suggestions missing from a matching data snapshot');
+ }else{
+  assert.equal(ban,0,'Stale IGN/BAN coordinates must be discarded');
+  assert.ok((await page.locator('#loading').innerText()).includes('ignorées')||(await page.locator('#loading').innerText()).includes('indisponible'),'Stale or missing IGN/BAN snapshot must be explained');
+ }
  const original=Number((await page.locator('#count-osm').innerText()).replaceAll(/\s/g,''));
  assert.ok(original>=800,'Baseline OSM inventory unexpectedly small');
  await page.locator('#source').selectOption('nonosm');

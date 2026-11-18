@@ -30,8 +30,8 @@ Application publique **100 % gratuite**, indépendante de SMBG, hébergée dans 
 | Points OSM non classés | 24 | Nature à déterminer |
 | Paires de doublons OSM potentiels | 2 | Non fusionnés automatiquement |
 | Nouveaux / retirés depuis la précédente extraction | 0 / 0 | Comparaison des identifiants OSM |
-| Candidats administratifs SIRENE actifs 96.01B | **2 370** | Comprend pressings, sièges et adresses non commerciales |
-| Candidats SIRENE à moins de 45 m d'un point OSM | 897 | Proximité, pas identité confirmée |
+| Candidats administratifs SIRENE actifs 96.01B | **2 371** | Snapshot complet du 18/11/2026 ; comprend pressings, sièges et adresses non commerciales |
+| Paires SIRENE à moins de 45 m d'un point OSM | 898 | Proximité, pas identité confirmée |
 | Points OSM distincts avec candidat SIRENE proche | 744 | Proximité, pas identité confirmée |
 | Candidats SIRENE sans OSM proche, avec nom commercial évocateur | **85** | Pistes prioritaires de vérification manuelle |
 | Quartiers INSEE IRIS | 2 695 | Statistiques officielles RP 2022 |

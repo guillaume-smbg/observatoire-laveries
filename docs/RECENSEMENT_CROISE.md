@@ -15,7 +15,10 @@ La consolidation recoupe les établissements étiquetés « laundry » d'OpenStr
 | BAUG — fiches annoncées par le site sur les quatre départements | 1 241 |
 | Fiches BAUG annoncées mais non accessibles via les listes publiques consultées | 486 |
 | **Candidats uniques après rapprochement prudent** | **1 658** |
-| Candidats géolocalisés | 1 479 |
+| Candidats directement géolocalisés depuis les annuaires / OSM | 1 479 |
+| Adresses supplémentaires géocodées strictement par IGN/BAN | 44 |
+| Positions estimées utilisées par le classement | 1 523 |
+| Candidats restant sans position exploitable après ce géocodage | 135 |
 | Candidats sans géolocalisation suffisamment fiable | 179 |
 | Candidats présents dans au moins deux sources cartographiques | 858 |
 | Candidats présents dans une seule source | 800 |
@@ -37,7 +40,7 @@ La somme brute des trois catalogues est **2 846 références**, mais ces référ
 | Val-de-Marne 94 | 121 | 204 | 222 | 226 | 316 | 255 |
 | **Total** | **929** | **1 162** | **755** | **1 241** | **1 658** | **1 479** |
 
-Les chiffres BAUG « annoncés » correspondent aux compteurs publics de ses pages départementales et non à des établissements récupérés ou certifiés. Leurs fiches de Paris sont **tronquées à 100**, y compris avec un paramètre `?page=2` : l'accès libre disponible ici ne permet donc pas de récupérer ses 578 fiches annoncées. Deux pages villes BAUG ont renvoyé HTTP 404 : L'Haÿ-les-Roses et Ormesson-sur-Marne.
+Les chiffres BAUG « annoncés » correspondent aux compteurs publics de ses pages départementales et non à des établissements récupérés ou certifiés. Sur les 486 fiches annoncées mais non retrouvées, **478 concernent Paris**, dont les fiches sont **tronquées à 100**, même avec un paramètre `?page=2` ; les huit autres écarts sont quatre en Seine-Saint-Denis et quatre dans le Val-de-Marne. Deux pages villes BAUG ont renvoyé HTTP 404 : L'Haÿ-les-Roses et Ormesson-sur-Marne.
 
 ## Algorithme de rapprochement
 
@@ -64,7 +67,7 @@ Ces statuts restent dans le stockage local du navigateur et sont exportables en 
 
 ## SIRENE et score commercial
 
-L'observatoire conserve séparément **2 370** candidats administratifs sous l'activité NAF 96.01B. Ils comprennent des pressings et des adresses de siège ; il est incorrect d'ajouter leur nombre aux 1 658 candidats cartographiques. Les rapprochements SIRENE à moins de 45 m sont seulement des indices géographiques.
+L'observatoire conserve séparément **2 371** candidats administratifs sous l'activité NAF 96.01B (snapshot complet du 18 novembre 2026). Ils comprennent des pressings et des adresses de siège ; il est incorrect d'ajouter leur nombre aux 1 658 candidats cartographiques. Les rapprochements SIRENE à moins de 45 m sont seulement des indices géographiques.
 
 Le classement démographique des opportunités repose toujours sur l'inventaire OSM et les estimations de population à partir d'IRIS. **La liste de 1 658 candidats ne remplace pas automatiquement l'hypothèse de concurrence de ce classement**, puisque les sources supplémentaires n'ont pas été vérifiées.
 
