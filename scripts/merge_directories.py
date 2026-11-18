@@ -177,7 +177,7 @@ def lonlat_m(a,b):
     return math.hypot(dx,dy)
 
 def same_address(a,b):
-    if a["dept"]!=b["dept"]:return False
+    if (a.get("dept") or a.get("dep"))!=(b.get("dept") or b.get("dep")):return False
     pa,sa=address_key(a["address"],a.get("postcode"))
     pb,sb=address_key(b["address"],b.get("postcode"))
     na,nb=house(a["address"]),house(b["address"])
