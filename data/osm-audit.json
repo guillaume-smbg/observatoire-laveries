@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-11-18T10:25:54.755357+00:00",
+  "source_url": "https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.pbf",
+  "method": "Fresh full Île-de-France Geofabrik PBF extraction (no old items reused)",
+  "previous_snapshot_count": 929,
+  "current_snapshot_count": 929,
+  "added_count": 0,
+  "removed_count": 0,
+  "new_ids": [],
+  "removed_ids": [],
+  "possible_duplicate_pairs": 2,
+  "possible_duplicate_examples": [
+    [
+      "node/14280159164",
+      "node/2739762242"
+    ],
+    [
+      "node/5233119326",
+      "node/9558748917"
+    ]
+  ],
+  "quality_distribution": {
+    "self_service_tagged": 752,
+    "probably_not_automatic": 61,
+    "possibly_automatic": 92,
+    "unclassified": 24
+  },
+  "scope": "Paris + 92 + 93 + 94 (administrative boundaries)",
+  "note": "Possible duplicates not removed; OSM editing dates do not prove a business is operating."
+}\n
