@@ -26,7 +26,6 @@ GEO_URLS = [
 OVERPASS = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass-api.de/api/interpreter",
-    "https://overpass.nchc.org.tw/api/interpreter",
 ]
 
 
@@ -43,7 +42,7 @@ def retrieve(url, payload=None, timeout=65, retries=2):
         except Exception as exc:
             error = exc
             logging.warning("source %s: attempt %s: %s", url[:65], attempt + 1, exc)
-            if attempt < 2:
+            if attempt < retries - 1:
                 time.sleep(2 * (attempt + 1))
     raise RuntimeError(str(error))
 
@@ -190,7 +189,11 @@ def collect_osm():
             failed.append(dep)
             continue
         elements = response.get("elements", [])
-        if len(elements) < 5:\n            logging.warning("Dept %s: only %s OSM objects returned; classification rejected", dep, len(elements))\n            failed.append(dep)\n            continue\n        per_dept[dep] = len(elements)
+        if len(elements) < 5:
+            logging.warning("Dept %s: only %s OSM objects returned; classification rejected", dep, len(elements))
+            failed.append(dep)
+            continue
+        per_dept[dep] = len(elements)
         for obj in elements:
             tags = obj.get("tags") or {}
             center = obj.get("center") or obj
