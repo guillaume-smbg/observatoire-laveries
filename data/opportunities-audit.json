@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-18T12:25:35.906959+00:00",
+  "generated_at": "2026-11-18T12:28:16.076135+00:00",
   "count_iris": 2695,
   "scorable": 2589,
   "unscorable": 106,
@@ -9,7 +9,7 @@
   "max_osm_points_500m": 20,
   "max_directory_candidates_500m": 28,
   "directory_candidates_total": 1658,
-  "directory_candidates_geolocated": 1479,
+  "directory_candidates_geolocated": 1523,
   "directory_age": "2026-11-18T12:25:08.611171+00:00",
   "osm_date": "2026-11-18T12:22:38.326824+00:00",
   "insee_date": "2026-11-18T12:20:51.918657+00:00",
