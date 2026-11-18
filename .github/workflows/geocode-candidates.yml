@@ -1,0 +1,45 @@
+name: Geocode missing directory addresses
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "40 7 * * 5"
+  push:
+    paths:
+      - scripts/geocode_candidates.py
+      - .github/workflows/geocode-candidates.yml
+  workflow_run:
+    workflows:
+      - Cross-check public laundry directories
+    types: [completed]
+permissions:
+  contents: write
+concurrency:
+  group: geocode-directory
+  cancel-in-progress: false
+jobs:
+  geocode:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Geocode strict public addresses (not businesses)
+        run: python3 scripts/geocode_candidates.py
+      - name: Verify address provenance and match safety
+        run: node tests/geocoded.mjs
+      - name: Publish address-only positions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/geocoded-addresses.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: strict IGN BAN address suggestions for unlocated entries"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
