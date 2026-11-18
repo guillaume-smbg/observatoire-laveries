@@ -45,7 +45,7 @@ footer{max-width:1440px;margin:14px auto 28px;padding:0 16px;color:var(--muted);
 <section class="panel">
 <p class="warning"><strong>Étude exploratoire, pas un diagnostic commercial certifié.</strong> Les habitants et logements dans les rayons sont <strong>estimés en répartissant uniformément les données au sein de chaque IRIS</strong>. Les distances sont à vol d'oiseau et les établissements OSM ne sont pas vérifiés. Les points proposés sont des lieux représentatifs d'un quartier, <strong>pas des locaux disponibles</strong>.</p>
 <p id="loading" role="status">Chargement des statistiques publiques…</p>
-<div class="kpis"><div class="kpi"><small>Zones IRIS analysées</small><strong id="k-iris">—</strong></div><div class="kpi"><small>Zones analysables</small><strong id="k-scores">—</strong></div><div class="kpi"><small>Points OSM (non vérifiés)</small><strong id="k-osm">—</strong></div><div class="kpi"><small>Emplacements sauvegardés</small><strong id="k-saved">0</strong></div></div>
+<div class="kpis"><div class="kpi"><small>Zones IRIS analysées</small><strong id="k-iris">—</strong></div><div class="kpi"><small>Zones analysables</small><strong id="k-scores">—</strong></div><div class="kpi"><small>Points OSM (non vérifiés)</small><strong id="k-osm">—</strong></div><div class="kpi"><small>Pistes annuaires croisées</small><strong id="k-directory">—</strong></div><div class="kpi"><small>Emplacements sauvegardés</small><strong id="k-saved">0</strong></div></div>
 </section>
 <section class="panel hide-print" id="filters-panel">
 <h2>Filtrer et classer les opportunités</h2>
@@ -53,12 +53,13 @@ footer{max-width:1440px;margin:14px auto 28px;padding:0 16px;color:var(--muted);
 <label>Département<select id="dept"><option value="">75, 92, 93, 94</option><option value="75">Paris (75)</option><option value="92">Hauts-de-Seine (92)</option><option value="93">Seine-Saint-Denis (93)</option><option value="94">Val-de-Marne (94)</option></select></label>
 <label>Commune / quartier<input id="search" placeholder="Ex. Paris 7e, Montrouge"></label>
 <label>Rayon géométrique<select id="radius"><option value="300">300 m</option><option value="500" selected>500 m</option><option value="1000">1 000 m</option></select></label>
-<label>Concurrence OSM incluse<select id="evidence"><option value="all">Tous points OSM (prudent)</option><option value="plausible" selected>Libre-service + nom de laverie</option><option value="explicit">Libre-service renseigné seulement</option></select></label>
+<label>Hypothèse de concurrence<select id="evidence"><option value="dir_multi" selected>Annuaire croisé : au moins 2 sources, nature plausible</option><option value="dir_plausible">Annuaire croisé : toutes les pistes de laverie plausibles</option><option value="dir_all">Annuaire croisé : toutes les fiches, pressings possibles</option><option value="all">Tous points OSM (prudent)</option><option value="plausible">OSM : libre-service + nom de laverie</option><option value="explicit">OSM : libre-service renseigné</option></select></label>
 <label>Part minimale de petits logements<select id="small-share"><option value="0">Aucun seuil</option><option value="30">30 %</option><option value="40">40 %</option><option value="50">50 %</option><option value="60">60 %</option></select></label>
 <label>Couverture géographique minimale<select id="coverage"><option value="0.8" selected>80 % (recommandé)</option><option value="0.9">90 %</option><option value="0.98">98 %</option></select></label>
 <label>Classement<select id="sort"><option value="score">Indice exploratoire</option><option value="housing">Résidences principales</option><option value="small">Petits logements (%)</option><option value="renters">Locataires (%)</option><option value="few">Peu de points OSM</option></select></label>
 <label>Réduire les zones voisines<select id="dedupe"><option value="650" selected>Zones espacées de 650 m</option><option value="0">Toutes les zones IRIS</option><option value="1000">Zones espacées de 1 km</option></select></label>
 </div>
+<label class="muted" style="display:flex;align-items:center;gap:9px"><input type="checkbox" id="exclude-local" checked style="width:auto"> Écarter mes fiches classées « À exclure » sur ce navigateur</label>
 <div class="bar"><button id="download-csv">Exporter le classement CSV</button><button class="secondary" id="show-competitors">Afficher/masquer les laveries OSM</button><button class="secondary" id="reset-filters">Réinitialiser les filtres</button></div>
 <p id="rank-note" class="muted" role="status"></p>
 </section>
@@ -70,7 +71,7 @@ footer{max-width:1440px;margin:14px auto 28px;padding:0 16px;color:var(--muted);
 <div class="actionline hide-print"><button id="save-place" disabled>Ajouter à comparer</button><button class="secondary" id="print-report">Imprimer / enregistrer en PDF</button></div>
 </section>
 <section class="panel">
-<h3>Concurrence autour de la zone</h3><div id="compete-list" class="muted">Choisissez une zone.</div>
+<h3>Concurrence autour de la zone</h3><div id="compete-list" class="muted">Choisissez une zone.</div><div class="actions hide-print"><button id="walk-iso" class="secondary" type="button">Isochrones piétons 5 / 10 / 15 min</button><button id="walk-clear" class="secondary" type="button">Masquer les isochrones</button></div><p id="walk-status" class="muted" role="status">Isochrones à la demande via un service public de démonstration : disponibilité non garantie. Les scores restent calculés sur des rayons à vol d’oiseau.</p>
 </section>
 <section class="panel hide-print">
 <h3>Paramètres du classement</h3>
@@ -82,12 +83,12 @@ footer{max-width:1440px;margin:14px auto 28px;padding:0 16px;color:var(--muted);
 <section class="panel" id="map-panel">
 <h2>Carte des zones étudiées</h2>
 <div id="map" aria-label="Carte interactive des quartiers IRIS"></div>
-<p class="muted">Les couleurs indiquent un indice expérimental. Cliquer sur un point IRIS ne sélectionne pas un commerce disponible. La carte des laveries utilise des points OSM non vérifiés.</p>
+<p class="muted">Les couleurs indiquent un indice expérimental. Cliquer sur un point IRIS ne sélectionne pas un commerce disponible. Les points issus des annuaires restent non vérifiés ; les adresses géocodées par IGN/BAN ne prouvent pas l’existence des commerces.</p>
 </section>
 <section class="panel" id="table-panel" style="margin-top:16px">
 <h2 id="ranked">Classement des zones à explorer</h2>
 <p class="muted" id="list-subtitle">Calcul du classement…</p>
-<div class="table-wrap"><table><thead><tr><th>Zone IRIS</th><th>Indice*</th><th>Habitants estimés</th><th>Petits logements</th><th>Locataires</th><th>OSM proches</th><th>Action</th></tr></thead><tbody id="top-rows"></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Zone IRIS</th><th>Indice*</th><th>Habitants estimés</th><th>Petits logements</th><th>Locataires</th><th>Fiches proches selon filtre</th><th>Action</th></tr></thead><tbody id="top-rows"></tbody></table></div>
 <p class="muted">* Classement indicatif fondé sur des hypothèses, pas sur des ouvertures réussies ou un CA observé. Les 50 premières zones distinctes sont proposées par défaut.</p>
 </section>
 </div>
