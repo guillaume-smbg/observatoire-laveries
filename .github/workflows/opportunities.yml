@@ -12,6 +12,7 @@ on:
     workflows:
       - Geocode missing directory addresses
       - Cross-check public laundry directories
+      - Refresh official INSEE IRIS statistics
     types: [completed]
 permissions:
   contents: write
