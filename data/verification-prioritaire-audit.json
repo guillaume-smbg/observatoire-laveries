@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-11-19T13:38:47.234021+00:00",
+  "generated_at": "2026-11-19T13:40:29.965989+00:00",
   "total": 1658,
   "counts_by_priority": {
-    "A — à vérifier en priorité": 413,
-    "B — à vérifier": 612,
+    "A — à vérifier en priorité": 371,
+    "B — à vérifier": 654,
     "C — contrôle standard": 633
   },
   "directory_generated_at": "2026-11-19T13:38:21.711028+00:00",
-  "opportunities_generated_at": "2026-11-19T13:38:46.927769+00:00",
-  "ban_generated_at": "2026-11-18T14:19:35.704994+00:00",
+  "opportunities_generated_at": "2026-11-19T13:40:29.727216+00:00",
+  "ban_generated_at": "2026-11-19T13:39:58.123865+00:00",
   "method": "Manual review workload score: single-source, dubious type, ambiguous match, uncertain coordinates, and proximity to exploratory top 50.",
   "limitation": "Every lead is unverified, no Google Places data is downloaded. Priority is NOT a business-activity assessment."
 }
