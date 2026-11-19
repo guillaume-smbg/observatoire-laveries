@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-11-18T13:16:43.855942+00:00",
+  "generated_at": "2026-11-19T13:35:35.188494+00:00",
   "source": "https://recherche-entreprises.api.gouv.fr/search",
-  "registered_candidates": 2371,
+  "registered_candidates": 2372,
   "distinct_osm_proximity_matches": 744,
   "proximity_pairs": 898,
   "counts_by_department": {
     "92": 418,
-    "75": 1185,
+    "75": 1186,
     "93": 417,
     "94": 351
   },
