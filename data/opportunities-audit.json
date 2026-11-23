@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-21T13:41:59.345680+00:00",
+  "generated_at": "2026-11-23T15:16:56.372234+00:00",
   "count_iris": 2695,
   "scorable": 2589,
   "unscorable": 106,
@@ -12,6 +12,6 @@
   "directory_candidates_geolocated": 1543,
   "directory_age": "2026-11-20T15:24:02.601420+00:00",
   "osm_date": "2026-11-18T12:22:38.326824+00:00",
-  "insee_date": "2026-11-18T12:20:51.918657+00:00",
+  "insee_date": "2026-11-23T15:16:27.878202+00:00",
   "caveat": "Area-weighted estimated populations, only place representative points, multi-source directories not field-verified, possible duplicated and closed premises; score is heuristic."
 }
