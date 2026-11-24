@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-11-20T15:24:02.601420+00:00",
+  "generated_at": "2026-11-24T14:54:11.475032+00:00",
   "source_counts": {
     "osm": 929,
-    "ouvert": 1162,
+    "ouvert": 1160,
     "baug": 755
   },
   "coverage": {
@@ -16,7 +16,7 @@
     },
     "92": {
       "osm": 161,
-      "ouvert": 159,
+      "ouvert": 158,
       "baug": 180,
       "distinct_candidates": 288,
       "geolocated": 247,
@@ -24,7 +24,7 @@
     },
     "93": {
       "osm": 121,
-      "ouvert": 217,
+      "ouvert": 216,
       "baug": 235,
       "distinct_candidates": 358,
       "geolocated": 290,
@@ -40,19 +40,19 @@
     }
   },
   "match_stats": {
-    "ouvert_linked": 710,
-    "ouvert_new_geo": 452,
-    "baug_linked": 478,
+    "ouvert_linked": 709,
+    "ouvert_new_geo": 451,
+    "baug_linked": 477,
     "baug_new_unlocated": 179,
-    "baug_new_geo": 98
+    "baug_new_geo": 99
   },
   "composition": {
-    "osm": 296,
-    "osm+ouvert": 416,
+    "osm": 297,
+    "osm+ouvert": 415,
     "baug+osm+ouvert": 217,
     "ouvert": 227,
-    "baug+ouvert": 225,
-    "baug": 277
+    "baug+ouvert": 224,
+    "baug": 278
   },
   "total_candidates": 1658,
   "located_candidates": 1479,
@@ -65,8 +65,8 @@
     },
     "ouvert": {
       "75": 563,
-      "92": 171,
-      "93": 224,
+      "92": 170,
+      "93": 223,
       "94": 204
     }
   },
@@ -79,8 +79,8 @@
     },
     "ouvert": {
       "75": 563,
-      "92": 171,
-      "93": 224,
+      "92": 170,
+      "93": 223,
       "94": 204
     },
     "baug": {
